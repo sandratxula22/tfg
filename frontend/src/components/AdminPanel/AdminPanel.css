@@ -1,0 +1,8 @@
+.admin-link {
+    text-decoration: none;
+}
+
+.cabecera-dark tr th {
+    background-color: #212529;
+    color: white;
+}

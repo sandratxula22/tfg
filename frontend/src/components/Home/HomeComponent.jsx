@@ -42,19 +42,17 @@ function Home() {
                     {libros.map(libro => (
 
                         <div key={libro.id} className="border rounded-lg shadow-md p-4 flex flex-col h-full">
-
-                            <h3 className="text-xl font-semibold mb-2">{libro.titulo}</h3>
                             {libro.imagen_portada && (
                                 <img
                                 src={`${import.meta.env.VITE_API_BASE_URL}/portadas/${libro.imagen_portada}`}
                                     alt={`Portada de ${libro.titulo}`}
-                                    className="w-full h-48 object-cover mb-4 rounded"
+                                    className="w-full object-cover mb-4 rounded"
                                 />
                             )}
+                            <h4 className="text-xl font-semibold mb-2">{libro.titulo}</h4>
                             <p className="text-gray-700">Autor: {libro.autor}</p>
                             <p className="text-gray-700">Género: {libro.genero}</p>
                             <p className="text-gray-700">Precio: {libro.precio}€</p>
-                            <p className="text-gray-700 flex-grow">{libro.descripcion.substring(0, 100)}...</p>
                             <Link to={`/libro/${libro.id}`} className="inline-block mt-4 text-blue-500 hover:underline">Ver detalles</Link>
                         </div>
                     ))}

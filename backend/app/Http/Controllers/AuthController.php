@@ -52,9 +52,10 @@ class AuthController extends Controller
         if ($user && Hash::check($request->contrasena, $user->contrasena)) {
             Auth::login($user);
             $token = $user->createToken('auth_token')->plainTextToken;
-             return response()->json([
+            return response()->json([
                 'access_token' => $token,
                 'token_type' => 'Bearer',
+                'rol' => $user->rol,
             ]);
         }
 

@@ -17,7 +17,6 @@ return new class extends Migration
             $table->decimal('precio', 8, 2);
             $table->boolean('disponible')->default(true);
             $table->string('imagen_portada')->nullable();
-            $table->json('imagenes_adicionales')->nullable();
             $table->timestamps();
         });
     }

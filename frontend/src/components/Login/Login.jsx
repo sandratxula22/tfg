@@ -30,7 +30,8 @@ function Login() {
             }
 
             const data = await response.json();
-            localStorage.setItem('authToken', data.token);
+            localStorage.setItem('authToken', data.access_token);
+            localStorage.setItem('userRole', data.rol);
             navigate('/');
         } catch (error) {
             setError('Error de conexión con el servidor');
@@ -63,6 +64,7 @@ function Login() {
                         value={contrasena}
                         onChange={(e) => setContrasena(e.target.value)}
                         required
+                        autoComplete="email"
                     />
                 </div>
                 <div className="flex items-center justify-between">

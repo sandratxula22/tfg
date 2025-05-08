@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Libro extends Model
 {
@@ -15,7 +16,11 @@ class Libro extends Model
         'descripcion',
         'precio',
         'imagen_portada',
-        'imagenes_adicionales',
         'disponible',
     ];
+
+    public function imagenesAdicionales(): HasMany
+    {
+        return $this->hasMany(Image::class);
+    }
 }

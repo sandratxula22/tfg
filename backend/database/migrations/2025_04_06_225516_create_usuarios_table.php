@@ -15,6 +15,7 @@ return new class extends Migration
             $table->string('direccion');
             $table->string('correo')->unique();
             $table->string('contrasena');
+            $table->enum('rol', ['usuario', 'admin'])->default('usuario');
             $table->timestamps();
         });
     }

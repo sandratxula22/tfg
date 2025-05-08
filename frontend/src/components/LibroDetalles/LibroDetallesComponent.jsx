@@ -64,19 +64,19 @@ function LibroDetallesComponent() {
                     <p className="text-gray-800">{libro.descripcion}</p>
                 </div>
             </div>
-
-            {libro.imagenes_adicionales && (
-                <div className="flex flex-wrap m-auto gap-4 mb-8">
-                    {Object.keys(libro.imagenes_adicionales).map(key => (
-                        <img
-                            key={key}
-                            src={`${import.meta.env.VITE_API_BASE_URL}/adicionales/${libro.imagenes_adicionales[key]}`}
-                            alt={`Imagen adicional de ${libro.titulo}`}
-                            className="w-auto h-48 rounded-lg shadow-md"
-                        />
-                    ))}
-                </div>
-            )}
+            
+            {libro.imagenes_adicionales && libro.imagenes_adicionales.length > 0 && (
+            <div className="flex flex-wrap m-auto gap-4 mb-8">
+                {libro.imagenes_adicionales.map(imagen => (
+                    <img
+                        key={imagen.id}
+                        src={`${import.meta.env.VITE_API_BASE_URL}/adicionales/${imagen.url}`}
+                        alt={`Imagen adicional de ${libro.titulo}`}
+                        className="w-auto h-48 rounded-lg shadow-md"
+                    />
+                ))}
+            </div>
+        )}
 
             <Link to="/" className="inline-block mt-4 text-blue-500 hover:underline">Volver a la lista</Link>
         </div>

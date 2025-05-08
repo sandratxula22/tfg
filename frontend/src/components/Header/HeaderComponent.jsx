@@ -1,29 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import LogoutButton from '../Login/LogoutButton';
 import './Header.css';
 
 function HeaderComponent() {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const navigate = useNavigate();
-
-    useEffect(() => {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-            setIsLoggedIn(true);
-        } else {
-            setIsLoggedIn(false);
-        }
-    }, []);
+    const isLoggedIn = !!localStorage.getItem('authToken');
+    const userRole = localStorage.getItem('userRole');
 
     const handleLogoutSuccess = () => {
-        setIsLoggedIn(false);
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userRole');
         navigate('/');
+        window.dispatchEvent(new Event('storage'));
     };
 
     return (
-        <Navbar variant="dark" expand="lg" className="mb-4 bg-primary-500">
+        <Navbar variant="dark" expand="lg" className="bg-primary-500">
             <Container>
                 <Navbar.Brand as={Link} to="/">
                     <img
@@ -39,12 +33,15 @@ function HeaderComponent() {
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="me-auto">
                         <Nav.Link as={Link} to="/">Inicio</Nav.Link>
+                        {userRole === 'admin' && (
+                            <Nav.Link as={Link} to="/admin">Panel de Admin</Nav.Link>
+                        )}
                     </Nav>
                     <Nav className="ml-auto">
                         {isLoggedIn ? (
-                            <LogoutButton onLogout={handleLogoutSuccess} className="text-white" />
+                            <LogoutButton onLogout={handleLogoutSuccess} />
                         ) : (
-                            <Nav.Link as={Link} to="/login" className="text-white">
+                            <Nav.Link as={Link} to="/login">
                                 Iniciar Sesión
                             </Nav.Link>
                         )}

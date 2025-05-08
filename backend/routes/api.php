@@ -19,3 +19,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::get('/libros', [LibroController::class, 'showBooks']);
 Route::get('/libros/{id}', [LibroController::class, 'showBookById']);
+
+Route::middleware('auth:sanctum')->delete('/admin/libros/delete/{id}', [LibroController::class, 'deleteBook']);
+Route::middleware('auth:sanctum')->put('/admin/libros/edit/{id}', [LibroController::class, 'editBook']);
+Route::middleware('auth:sanctum')->post('/admin/libros/create', [LibroController::class, 'createBook']);
+Route::middleware('auth:sanctum')->post('/admin/libros/{libro_id}/upload-image', [LibroController::class, 'uploadImage']);
