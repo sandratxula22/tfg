@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
+import axios from 'axios';
 
 function SubirImagenLibro() {
     const navigate = useNavigate();
     const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [libros, setLibros] = useState([]);
     const [libroId, setLibroId] = useState('');
-    const [urlImagen, setUrlImagen] = useState('');
+    const [imagenFile, setImagenFile] = useState(null);
     const [error, setError] = useState('');
     const [mensaje, setMensaje] = useState('');
 
@@ -39,8 +40,8 @@ function SubirImagenLibro() {
         setLibroId(e.target.value);
     };
 
-    const handleUrlImagenChange = (e) => {
-        setUrlImagen(e.target.value);
+    const handleImagenChange = (e) => {
+        setImagenFile(e.target.files[0]);
     };
 
     const handleSubmit = async (e) => {
@@ -53,29 +54,29 @@ function SubirImagenLibro() {
             return;
         }
 
-        if (!urlImagen) {
-            setError('Por favor, introduce la URL de la imagen.');
+        if (!imagenFile) {
+            setError('Por favor, selecciona un archivo de imagen.');
             return;
         }
 
+        const formData = new FormData();
+        formData.append('imagen', imagenFile);
+
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`${VITE_API_BASE_URL}/api/admin/libros/${libroId}/upload-image`, {
-                method: 'POST',
+            const response = await axios.post(`${VITE_API_BASE_URL}/api/admin/libros/${libroId}/upload-image`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'multipart/form-data',
                 },
-                body: JSON.stringify({ url: urlImagen }),
             });
 
-            if (response.ok) {
-                setMensaje('Imagen subida exitosamente.');
-                setUrlImagen('');
+            if (response.status === 201) {
+                setMensaje('Imagen subida con éxito.');
+                setImagenFile(null);
             } else {
-                const errorData = await response.json();
-                console.error("Error al subir la imagen:", errorData);
-                setError(errorData.message || 'Error al subir la imagen.');
+                console.error("Error al subir la imagen:", response.data);
+                setError(response.data.message || 'Error al subir la imagen.');
             }
         } catch (error) {
             console.error("Error al conectar con la API:", error);
@@ -99,19 +100,18 @@ function SubirImagenLibro() {
                     </Form.Control>
                 </Form.Group>
 
-                <Form.Group className="mb-3" controlId="formUrlImagen">
-                    <Form.Label>URL de la Imagen</Form.Label>
+                <Form.Group className="mb-3" controlId="formImagen">
+                    <Form.Label>Archivo de Imagen</Form.Label>
                     <Form.Control
-                        type="text"
-                        value={urlImagen}
-                        onChange={handleUrlImagenChange}
-                        placeholder="Introduce la URL de la imagen"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImagenChange}
                         required
                     />
                 </Form.Group>
 
                 <Button variant="primary" type="submit">Subir Imagen</Button>
-                <Button variant="secondary" onClick={() => navigate('/admin/libros')}>Volver</Button>
+                <Button variant="secondary" onClick={() => navigate('/admin/imagenes')}>Volver</Button>
             </Form>
         </div>
     );

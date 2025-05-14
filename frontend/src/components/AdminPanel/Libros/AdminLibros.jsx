@@ -9,6 +9,7 @@ function AdminLibros() {
     const [libros, setLibros] = useState([]);
     const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const navigate = useNavigate();
+    const [mensaje, setMensaje] = useState('');
 
     useEffect(() => {
         const fetchLibros = async () => {
@@ -30,14 +31,16 @@ function AdminLibros() {
         };
 
         fetchLibros();
-    }, []);
+
+        const editSuccessMessage = localStorage.getItem('libroEditSuccess');
+        if (editSuccessMessage) {
+            setMensaje(editSuccessMessage);
+            localStorage.removeItem('libroEditSuccess');
+        }
+    }, [VITE_API_BASE_URL]);
 
     const handleEditar = (id) => {
         navigate(`/libros/edit/${id}`);
-    };
-
-    const handleSubirImagen = () => {
-        navigate('/libros/images-upload');
     };
 
     const handleBorrar = async (id) => {
@@ -53,6 +56,7 @@ function AdminLibros() {
 
                 if (response.ok) {
                     setLibros(libros.filter(libro => libro.id !== id));
+                    setMensaje('Libro borrado con éxito.');
                 } else {
                     const errorData = await response.json();
                     console.error("Error al borrar el libro:", errorData);
@@ -72,6 +76,10 @@ function AdminLibros() {
     return (
         <div>
             <h2>Gestión de Libros</h2>
+            {mensaje && <div className="alert alert-success">{mensaje}</div>}
+            <div className="mb-3">
+                <Button variant="success" onClick={handleCrearLibro}>Crear nuevo libro</Button>
+            </div>
             <Table hover responsive>
                 <thead className="cabecera-dark">
                     <tr>
@@ -102,8 +110,6 @@ function AdminLibros() {
                     ))}
                 </tbody>
             </Table>
-            <Button variant="success" onClick={handleCrearLibro}>Crear Nuevo Libro</Button>
-            <Button variant="info" onClick={handleSubirImagen}>Subir Imagen</Button>
         </div>
     );
 }

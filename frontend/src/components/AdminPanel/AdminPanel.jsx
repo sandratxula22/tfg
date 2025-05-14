@@ -17,13 +17,16 @@ function AdminPanel() {
     }
 
     return (
-        <div className="flex h-screen bg-gray-100">
+        <div className="flex min-h-screen bg-gray-100">
             <div className="w-64 bg-gray-200 p-4">
                 <h3 className="text-xl font-semibold mb-4">Panel de admin</h3>
                 <nav>
                     <ul className="space-y-2">
                         <li>
                             <Link to="/admin/libros" className="admin-link block p-2 rounded hover:bg-gray-300">Libros</Link>
+                        </li>
+                        <li>
+                            <Link to="/admin/imagenes" className="admin-link block p-2 rounded hover:bg-gray-300">Imágenes</Link>
                         </li>
                         <li>
                             <Link to="/admin/usuarios" className="admin-link block p-2 rounded hover:bg-gray-300">Usuarios</Link>

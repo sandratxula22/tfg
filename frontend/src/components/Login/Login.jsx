@@ -64,7 +64,7 @@ function Login() {
                         value={contrasena}
                         onChange={(e) => setContrasena(e.target.value)}
                         required
-                        autoComplete="email"
+                        autoComplete="current-password"
                     />
                 </div>
                 <div className="flex items-center justify-between">

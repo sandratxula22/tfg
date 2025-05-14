@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
+import axios from 'axios';
 
 function EditarLibro() {
     const { id } = useParams();
@@ -16,6 +17,7 @@ function EditarLibro() {
         disponible: true,
         imagen_portada: '',
     });
+    const [imagenPortadaFile, setImagenPortadaFile] = useState(null);
     const [error, setError] = useState('');
 
     useEffect(() => {
@@ -49,25 +51,41 @@ function EditarLibro() {
         }));
     };
 
+    const handleImagenPortadaChange = (e) => {
+        setImagenPortadaFile(e.target.files[0]);
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
 
+        const formData = new FormData();
+        formData.append('titulo', libro.titulo);
+        formData.append('autor', libro.autor);
+        formData.append('genero', libro.genero);
+        formData.append('descripcion', libro.descripcion);
+        formData.append('precio', libro.precio);
+        formData.append('disponible', libro.disponible ? 1 : 0);
+        if (imagenPortadaFile) {
+            formData.append('imagen_portada', imagenPortadaFile);
+        } else if (libro.imagen_portada) {
+            formData.append('imagen_portada_actual', libro.imagen_portada);
+        }
+
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`${VITE_API_BASE_URL}/api/admin/libros/edit/${id}`, {
-                method: 'PUT',
+            const response = await axios.post(`${VITE_API_BASE_URL}/api/admin/libros/edit/${id}`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
+                    'Content-Type': 'multipart/form-data',
                 },
-                body: JSON.stringify(libro),
             });
 
-            if (response.ok) {
+            if (response.status === 200) {
+                localStorage.setItem('libroEditSuccess', 'Libro actualizado con éxito.');
                 navigate('/admin/libros');
             } else {
-                const errorData = await response.json();
+                const errorData = response.data;
                 console.error("Error al actualizar el libro:", errorData);
                 setError(errorData.message || 'Error al actualizar el libro');
             }
@@ -83,86 +101,42 @@ function EditarLibro() {
             {error && <div className="alert alert-danger">{error}</div>}
             <Form onSubmit={handleSubmit}>
                 <Form.Group className="mb-3" controlId="formTitulo">
-                    <Form.Label>Título</Form.Label>
-                    <Form.Control
-                        type="text"
-                        name="titulo"
-                        value={libro.titulo}
-                        onChange={handleChange}
-                        required
-                    />
+                    <Form.Label>Título <span className="text-danger">*</span></Form.Label>
+                    <Form.Control type="text" name="titulo" value={libro.titulo} onChange={handleChange} required />
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formAutor">
-                    <Form.Label>Autor</Form.Label>
-                    <Form.Control
-                        type="text"
-                        name="autor"
-                        value={libro.autor}
-                        onChange={handleChange}
-                        required
-                    />
+                    <Form.Label>Autor <span className="text-danger">*</span></Form.Label>
+                    <Form.Control type="text" name="autor" value={libro.autor} onChange={handleChange} required />
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formGenero">
-                    <Form.Label>Género</Form.Label>
-                    <Form.Control
-                        type="text"
-                        name="genero"
-                        value={libro.genero}
-                        onChange={handleChange}
-                        required
-                    />
+                    <Form.Label>Género <span className="text-danger">*</span></Form.Label>
+                    <Form.Control type="text" name="genero" value={libro.genero} onChange={handleChange} required />
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formDescripcion">
                     <Form.Label>Descripción</Form.Label>
-                    <Form.Control
-                        as="textarea"
-                        name="descripcion"
-                        value={libro.descripcion}
-                        onChange={handleChange}
-                    />
+                    <Form.Control as="textarea" name="descripcion" value={libro.descripcion} onChange={handleChange} />
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formPrecio">
-                    <Form.Label>Precio</Form.Label>
-                    <Form.Control
-                        type="number"
-                        name="precio"
-                        value={libro.precio}
-                        onChange={handleChange}
-                        step="0.01"
-                        required
-                    />
+                    <Form.Label>Precio <span className="text-danger">*</span></Form.Label>
+                    <Form.Control type="number" name="precio" value={libro.precio} onChange={handleChange} step="0.01" required />
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formDisponible">
-                    <Form.Check
-                        type="checkbox"
-                        name="disponible"
-                        label="Disponible"
-                        checked={libro.disponible}
-                        onChange={handleChange}
-                    />
+                    <Form.Check type="checkbox" name="disponible" label="Disponible" checked={libro.disponible} onChange={handleChange} />
                 </Form.Group>
 
                 <Form.Group className="mb-3" controlId="formImagenPortada">
-                    <Form.Label>Imagen de Portada</Form.Label>
-                    <Form.Control
-                        type="text"
-                        name="imagen_portada"
-                        value={libro.imagen_portada}
-                        onChange={handleChange}
-                    />
+                    <Form.Label>Imagen de Portada <span className="text-danger">*</span></Form.Label>
+                    <Form.Control type="file" accept="image/*" name="imagen_portada" onChange={handleImagenPortadaChange} />
+                    {libro.imagen_portada && <p className="mt-2">Portada actual: {libro.imagen_portada}</p>}
                 </Form.Group>
 
-                <Button variant="primary" type="submit">
-                    Guardar Cambios
-                </Button>
-                <Button variant="secondary" onClick={() => navigate('/admin/libros')}>
-                    Volver
-                </Button>
+                <Button variant="primary" type="submit">Guardar Cambios</Button>
+                <Button variant="secondary" onClick={() => navigate('/admin/libros')}>Volver</Button>
             </Form>
         </div>
     );

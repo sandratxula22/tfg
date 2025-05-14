@@ -17,6 +17,7 @@ class Libro extends Model
         'precio',
         'imagen_portada',
         'disponible',
+        'genero',
     ];
 
     public function imagenesAdicionales(): HasMany

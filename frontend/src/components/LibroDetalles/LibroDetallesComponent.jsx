@@ -50,7 +50,7 @@ function LibroDetallesComponent() {
                 <div className="md:w-1/4">
                     {libro.imagen_portada && (
                         <img
-                            src={`${import.meta.env.VITE_API_BASE_URL}/portadas/${libro.imagen_portada}`}
+                            src={`${import.meta.env.VITE_API_BASE_URL}/${libro.imagen_portada}`}
                             alt={`Portada de ${libro.titulo}`}
                             className="w-full h-auto rounded-lg shadow-md"
                         />
@@ -70,7 +70,7 @@ function LibroDetallesComponent() {
                 {libro.imagenes_adicionales.map(imagen => (
                     <img
                         key={imagen.id}
-                        src={`${import.meta.env.VITE_API_BASE_URL}/adicionales/${imagen.url}`}
+                        src={`${import.meta.env.VITE_API_BASE_URL}/${imagen.url}`}
                         alt={`Imagen adicional de ${libro.titulo}`}
                         className="w-auto h-48 rounded-lg shadow-md"
                     />

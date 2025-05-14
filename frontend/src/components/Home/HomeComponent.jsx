@@ -44,7 +44,7 @@ function Home() {
                         <div key={libro.id} className="border rounded-lg shadow-md p-4 flex flex-col h-full">
                             {libro.imagen_portada && (
                                 <img
-                                src={`${import.meta.env.VITE_API_BASE_URL}/portadas/${libro.imagen_portada}`}
+                                src={`${import.meta.env.VITE_API_BASE_URL}/${libro.imagen_portada}`}
                                     alt={`Portada de ${libro.titulo}`}
                                     className="w-full object-cover mb-4 rounded"
                                 />
