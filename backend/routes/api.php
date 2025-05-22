@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LibroController;
 use App\Http\Controllers\UsuarioController;
+use App\Http\Controllers\CarritoController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -37,4 +38,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/usuarios/create', [UsuarioController::class, 'createUser']);
     Route::delete('/admin/usuarios/delete/{id}', [UsuarioController::class, 'deleteUser']);
     Route::put('/admin/usuarios/edit/{id}', [UsuarioController::class, 'editUser']);
+
+    Route::get('/carrito', [CarritoController::class, 'showCarrito']);
+    Route::post('/carrito/add', [CarritoController::class, 'addToCart']);
+    Route::delete('/carrito/remove/{id}', [CarritoController::class, 'removeItem']);
 });

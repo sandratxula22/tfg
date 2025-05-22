@@ -24,4 +24,14 @@ class Libro extends Model
     {
         return $this->hasMany(Image::class);
     }
+
+    public function estaReservado()
+    {
+        return $this->carritoDetalles()->where('reservado_hasta', '>', now())->exists();
+    }
+
+    public function carritoDetalles()
+    {
+        return $this->hasMany(Carrito_detalle::class, 'id_libro');
+    }
 }

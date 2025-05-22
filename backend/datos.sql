@@ -40,4 +40,4 @@ INSERT INTO images (libro_id, url, created_at, updated_at) VALUES
 ((SELECT id FROM libros WHERE titulo = 'Memorias de Idhún III: Panteón'), 'adicionales/mdi3_3.jpg', NOW(), NOW());
 
 INSERT INTO usuarios (nombre, apellido, direccion, correo, contrasena, rol, created_at, updated_at) VALUES
-('NombreAdmin', 'ApellidoAdmin', 'DirecciónAdmin', 'admin@example.com', '$2y$12$YhsNJQz7GEe22MWxLS3YHeH1B8b2wZ7U6fAm/tHqYnVE3DGf45L4q', 'admin', NOW(), NOW());
+('NombreAdmin', 'ApellidoAdmin', 'DirecciónAdmin', 'admin@example.com', '$2y$12$p.fEQLo9IWBunjaJEElAl.qchJU/y87PNHS690UhS0xQsmmY1pTMS', 'admin', NOW(), NOW());

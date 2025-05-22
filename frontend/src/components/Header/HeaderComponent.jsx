@@ -37,11 +37,18 @@ function HeaderComponent() {
                             <Nav.Link as={Link} to="/admin">Panel de Admin</Nav.Link>
                         )}
                     </Nav>
-                    <Nav className="ml-auto">
+                    <Nav className="ml-auto align-items-center">
+                        {isLoggedIn && (
+                            <Nav.Link as={Link} to="/carrito" className="p-0">
+                                <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'white' }}>
+                                    shopping_cart
+                                </span>
+                            </Nav.Link>
+                        )}
                         {isLoggedIn ? (
-                            <LogoutButton onLogout={handleLogoutSuccess} />
+                            <LogoutButton onLogout={handleLogoutSuccess} className="ms-2" />
                         ) : (
-                            <Nav.Link as={Link} to="/login">
+                            <Nav.Link as={Link} to="/login" className="ms-2">
                                 Iniciar Sesión
                             </Nav.Link>
                         )}

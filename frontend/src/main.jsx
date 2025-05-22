@@ -19,6 +19,7 @@ import AdminImagenes from './components/AdminPanel/Imagenes/AdminImagenes.jsx';
 import EditarImagen from './components/AdminPanel/Imagenes/EditarImagen.jsx';
 import CrearUsuario from './components/AdminPanel/Usuarios/Crearusuario.jsx';
 import EditarUsuario from './components/AdminPanel/Usuarios/EditarUsuario.jsx';
+import Carrito from './components/Carrito/Carrito.jsx';
 
 
 const router = createBrowserRouter([
@@ -84,6 +85,10 @@ const router = createBrowserRouter([
       {
         path: '/usuarios/edit/:id',
         element: <EditarUsuario></EditarUsuario>
+      },
+      {
+        path: '/carrito',
+        element: <Carrito></Carrito>
       }
     ]
   }

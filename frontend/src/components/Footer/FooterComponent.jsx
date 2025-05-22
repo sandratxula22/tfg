@@ -7,7 +7,7 @@ function Footer() {
             <Container>
                 <Row>
                     <Col className="text-center">
-                        <p>&copy; {new Date().getFullYear()} Mi Tienda de Libros. Todos los derechos reservados.</p>
+                        <p>&copy; {new Date().getFullYear()} La Página Doblada</p>
                     </Col>
                 </Row>
             </Container>

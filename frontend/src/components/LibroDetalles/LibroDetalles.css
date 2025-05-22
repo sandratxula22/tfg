@@ -1,0 +1,7 @@
+.carousel-image {
+    max-height: 500px; /* O la altura que prefieras */
+    width: auto; /* Para mantener la proporción */
+    object-fit: contain; /* Asegura que la imagen completa se vea */
+    display: block; /* Evita espacios extra debajo de la imagen */
+    margin: 0 auto; /* Centra la imagen si es más pequeña que el ancho */
+}

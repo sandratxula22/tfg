@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import './Home.css';
+import Swal from 'sweetalert2';
 
 function Home() {
     const [libros, setLibros] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    const apiUrl = `${VITE_API_BASE_URL}/api/libros`;
+    const navigate = useNavigate();
 
-    useEffect(() => {
-        const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-        const apiUrl = `${VITE_API_BASE_URL}/api/libros`;
+    const fetchLibros = () => {
+        setLoading(true);
         fetch(apiUrl)
             .then(response => {
                 if (!response.ok) {
@@ -24,6 +28,10 @@ function Home() {
                 setError(error);
                 setLoading(false);
             });
+    };
+
+    useEffect(() => {
+        fetchLibros();
     }, []);
 
     if (loading) {
@@ -31,35 +39,127 @@ function Home() {
     }
 
     if (error) {
-        return <div className="text-red-500 py-4">Error al cargar los libros: {error.message}</div>;
+        return <div className="text-danger py-4">Error al cargar los libros: {error.message}</div>;
     }
 
-    return (
-        <div className="container mx-auto py-8">
-            <h1 className="text-3xl font-bold mb-8">Libros Reencuadernados</h1>
-            {libros.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                    {libros.map(libro => (
+    const handleAddToCart = (libroId, precio) => {
+        const carritoApiUrl = `${VITE_API_BASE_URL}/api/carrito/add`;
+        const authToken = localStorage.getItem('authToken');
 
-                        <div key={libro.id} className="border rounded-lg shadow-md p-4 flex flex-col h-full">
-                            {libro.imagen_portada && (
-                                <img
-                                src={`${import.meta.env.VITE_API_BASE_URL}/${libro.imagen_portada}`}
-                                    alt={`Portada de ${libro.titulo}`}
-                                    className="w-full object-cover mb-4 rounded"
-                                />
-                            )}
-                            <h4 className="text-xl font-semibold mb-2">{libro.titulo}</h4>
-                            <p className="text-gray-700">Autor: {libro.autor}</p>
-                            <p className="text-gray-700">Género: {libro.genero}</p>
-                            <p className="text-gray-700">Precio: {libro.precio}€</p>
-                            <Link to={`/libro/${libro.id}`} className="inline-block mt-4 text-blue-500 hover:underline">Ver detalles</Link>
+        if (!authToken) {
+            Swal.fire({
+                icon: 'warning',
+                title: '¡Debes iniciar sesión!',
+                text: 'Para añadir libros al carrito, primero debes iniciar sesión.',
+                showCancelButton: true,
+                confirmButtonText: 'Iniciar Sesión',
+                cancelButtonText: 'Cancelar',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    navigate('/login');
+                }
+            });
+            return;
+        }
+
+        fetch(carritoApiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`,
+            },
+            body: JSON.stringify({
+                id_libro: libroId,
+                precio: precio,
+            }),
+        })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        const error = new Error(data.message || 'Error al añadir al carrito');
+                        error.statusCode = response.status;
+                        throw error;
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                //console.log(data);
+                if (data.already_in_cart) {
+                    Swal.fire({
+                        icon: 'info',
+                        title: '¡Ya está en el carrito!',
+                        text: 'Este libro ya se encuentra en tu carrito y está reservado.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Reservado!',
+                        text: 'El libro ha sido reservado por 15 minutos.',
+                        showConfirmButton: false,
+                        timer: 1500
+                    });
+                    fetchLibros();
+                }
+            })
+            .catch(error => {
+                Swal.fire({
+                    icon: 'error',
+                    title: '¡Oops!',
+                    text: `Error al añadir al carrito: ${error.message}`,
+                });
+            });
+    };
+
+    return (
+        <div className="container py-5">
+            <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
+                {libros.map(libro => (
+                    <div key={libro.id} className="col">
+                        <div className="card h-100 shadow-sm">
+                            <div className="book-cover-container">
+                                {libro.imagen_portada && (
+                                    <img
+                                        src={`${VITE_API_BASE_URL}/${libro.imagen_portada}`}
+                                        alt={`Portada de ${libro.titulo}`}
+                                        className="book-cover-image"
+                                    />
+                                )}
+                            </div>
+                            <div className="card-body d-flex flex-column">
+                                <hr className="my-2" />
+                                <h4 className="card-title fw-bold text-black">{libro.titulo}</h4>
+                                <p className="card-text text-secondary small">{libro.autor}</p>
+                                <p className="card-text mt-auto">
+                                    <strong className="text-danger">{libro.precio}€</strong>
+                                </p>
+                                <div className="mt-3 d-grid gap-2">
+                                    {libro.esta_en_mi_carrito && !libro.esta_reservado && (
+                                        <p className="mt-1 text-info small">En tu carrito</p>
+                                    )}
+                                    {libro.esta_reservado && !libro.esta_en_mi_carrito && (
+                                        <p className="mt-1 text-warning small">Reservado</p>
+                                    )}
+                                    {libro.esta_en_mi_carrito && libro.reserva_expirada_en_mi_carrito && (
+                                        <p className="mt-1 text-warning small">Reserva expirada</p>
+                                    )}
+                                    <Link to={`/libro/${libro.id}`} className="btn btn-outline-primary btn-sm">Ver detalles</Link>
+                                    <button
+                                        className="btn btn-success btn-sm"
+                                        onClick={() => handleAddToCart(libro.id, libro.precio)}
+                                        disabled={libro.esta_reservado && !libro.esta_en_mi_carrito}
+                                    >
+                                        {libro.esta_en_mi_carrito && libro.reserva_expirada_en_mi_carrito ? 'Reservar' : (libro.esta_en_mi_carrito ? 'En carrito' : (libro.esta_reservado ? 'Reservado' : 'Añadir'))}
+                                    </button>
+                                </div>
+                            </div>
                         </div>
-                    ))}
-                </div>
-            ) : (
-                <p className="text-gray-500">No hay libros disponibles.</p>
-            )}
+                    </div>
+                ))}
+            </div>
+            {libros.length === 0 && <p className="mt-4 text-muted">No hay libros disponibles.</p>}
         </div>
     );
 }

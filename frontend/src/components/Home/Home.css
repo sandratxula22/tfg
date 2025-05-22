@@ -1,0 +1,25 @@
+.book-cover-container {
+    margin: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    max-height: 300px;
+}
+
+.book-cover-image {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.card-img-top {
+    padding: 0;
+    margin: 0;
+    border-radius: 0;
+}
+
+.card{
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
+}

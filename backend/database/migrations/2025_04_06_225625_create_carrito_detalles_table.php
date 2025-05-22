@@ -13,6 +13,7 @@ return new class extends Migration
             $table->decimal('precio', 8, 2);
             $table->foreignId('id_carrito')->constrained('carritos');
             $table->foreignId('id_libro')->constrained('libros');
+            $table->timestamp('reservado_hasta')->nullable();
             $table->timestamps();
         });
     }

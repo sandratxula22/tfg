@@ -10,15 +10,44 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Auth;
+use App\Models\Carrito_detalle;
 
 class LibroController extends Controller
 {
     public function showBooks(): JsonResponse
     {
-        $libros = Libro::with('imagenesAdicionales')->get();
+        $userId = Auth::id();
 
+        $libros = Libro::with('imagenesAdicionales')->get()->map(function ($libro) use ($userId) {
+            $estaEnMiCarrito = false;
+            $estaReservado = $libro->estaReservado();
+            $reservaExpiradaEnMiCarrito = false;
+
+            if ($userId) {
+                $miCarritoDetalle = Carrito_detalle::where('id_libro', $libro->id)
+                    ->whereHas('carrito', function ($query) use ($userId) {
+                        $query->where('id_usuario', $userId);
+                    })
+                    ->first();
+
+                if ($miCarritoDetalle) {
+                    $estaEnMiCarrito = true;
+                    if ($miCarritoDetalle->reservado_hasta && $miCarritoDetalle->reservado_hasta->isPast()) {
+                        $reservaExpiradaEnMiCarrito = true;
+                    }
+                }
+            }
+
+            return $libro->toArray() + [
+                'esta_en_mi_carrito' => $estaEnMiCarrito,
+                'esta_reservado' => $estaReservado,
+                'reserva_expirada_en_mi_carrito' => $reservaExpiradaEnMiCarrito,
+            ];
+        });
         return response()->json($libros);
     }
+
 
     public function showBookById(int $id): JsonResponse
     {
@@ -65,7 +94,7 @@ class LibroController extends Controller
     {
         try {
             $libro = Libro::findOrFail($id);
-    
+
             $validator = Validator::make($request->all(), [
                 'titulo' => 'required|string|max:255',
                 'autor' => 'required|string|max:255',
@@ -75,13 +104,13 @@ class LibroController extends Controller
                 'disponible' => 'required|boolean',
                 'imagen_portada' => 'nullable|image|mimes:jpeg,png,jpg,gif'
             ]);
-    
+
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
-    
+
             $libroData = $request->except('imagen_portada');
-    
+
             if ($request->hasFile('imagen_portada')) {
                 if ($libro->imagen_portada) {
                     $oldFilePath = public_path($libro->imagen_portada);
@@ -91,7 +120,7 @@ class LibroController extends Controller
                         Log::warning('Portada antigua no encontrada al borrar: ' . $oldFilePath);
                     }
                 }
-    
+
                 $image = $request->file('imagen_portada');
                 $extension = $image->getClientOriginalExtension();
                 $filename = Str::slug(pathinfo($image->getClientOriginalName(), PATHINFO_FILENAME)) . '_' . time() . '.' . $extension;
@@ -100,9 +129,9 @@ class LibroController extends Controller
             } else {
                 $libroData['imagen_portada'] = $libro->imagen_portada;
             }
-    
+
             $libro->update($libroData);
-    
+
             return response()->json(['message' => 'Libro actualizado exitosamente']);
         } catch (\Exception $e) {
             Log::error("Error al actualizar el libro con ID {$id}: " . $e->getMessage());
@@ -122,13 +151,13 @@ class LibroController extends Controller
                 'disponible' => 'required|boolean',
                 'imagen_portada' => 'required|image|mimes:jpeg,png,jpg,gif',
             ]);
-    
+
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
-    
+
             $libroData = $request->except('imagen_portada');
-    
+
             if ($request->hasFile('imagen_portada')) {
                 $image = $request->file('imagen_portada');
                 $extension = $image->getClientOriginalExtension();
@@ -136,9 +165,9 @@ class LibroController extends Controller
                 $image->move(public_path('portadas'), $filename);
                 $libroData['imagen_portada'] = 'portadas/' . $filename;
             }
-    
+
             $libro = Libro::create($libroData);
-    
+
             return response()->json(['message' => 'Libro creado exitosamente'], 201);
         } catch (\Exception $e) {
             Log::error("Error al crear un nuevo libro: " . $e->getMessage());

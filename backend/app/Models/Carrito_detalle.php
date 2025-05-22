@@ -13,6 +13,11 @@ class Carrito_detalle extends Model
         'precio',
         'id_carrito',
         'id_libro',
+        'reservado_hasta',
+    ];
+
+    protected $dates = [
+        'reservado_hasta',
     ];
 
     public function carrito()
