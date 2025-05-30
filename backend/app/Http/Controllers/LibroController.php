@@ -17,32 +17,11 @@ class LibroController extends Controller
 {
     public function showBooks(): JsonResponse
     {
-        $userId = Auth::id();
-
-        $libros = Libro::with('imagenesAdicionales')->get()->map(function ($libro) use ($userId) {
-            $estaEnMiCarrito = false;
+        $libros = Libro::with('imagenesAdicionales')->get()->map(function ($libro) {
             $estaReservado = $libro->estaReservado();
-            $reservaExpiradaEnMiCarrito = false;
-
-            if ($userId) {
-                $miCarritoDetalle = Carrito_detalle::where('id_libro', $libro->id)
-                    ->whereHas('carrito', function ($query) use ($userId) {
-                        $query->where('id_usuario', $userId);
-                    })
-                    ->first();
-
-                if ($miCarritoDetalle) {
-                    $estaEnMiCarrito = true;
-                    if ($miCarritoDetalle->reservado_hasta && $miCarritoDetalle->reservado_hasta->isPast()) {
-                        $reservaExpiradaEnMiCarrito = true;
-                    }
-                }
-            }
 
             return $libro->toArray() + [
-                'esta_en_mi_carrito' => $estaEnMiCarrito,
                 'esta_reservado' => $estaReservado,
-                'reserva_expirada_en_mi_carrito' => $reservaExpiradaEnMiCarrito,
             ];
         });
         return response()->json($libros);
@@ -66,6 +45,7 @@ class LibroController extends Controller
     {
         try {
             $libro = Libro::findOrFail($id);
+            $libro->carritoDetalles()->delete();
             $imagenesAdicionales = $libro->imagenesAdicionales;
 
             foreach ($imagenesAdicionales as $imagen) {

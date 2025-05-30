@@ -110,4 +110,40 @@ class CarritoController extends Controller
 
         return response()->json(['message' => 'Libro eliminado del carrito'], 200);
     }
+
+    public function renewReservation($id)
+    {
+        $idUsuario = Auth::id();
+
+        if (!$idUsuario) {
+            return response()->json(['message' => 'Usuario no autenticado'], 401);
+        }
+
+        $carritoDetalle = Carrito_detalle::where('id', $id)
+            ->whereHas('carrito', function ($query) use ($idUsuario) {
+                $query->where('id_usuario', $idUsuario);
+            })
+            ->first();
+
+        if (!$carritoDetalle) {
+            return response()->json(['message' => 'Item de carrito no encontrado o no pertenece a este usuario.'], 404);
+        }
+
+        $libroReservadoPorOtro = Carrito_detalle::where('id_libro', $carritoDetalle->id_libro)
+            ->where('reservado_hasta', '>', now())
+            ->where('id', '!=', $carritoDetalle->id)
+            ->exists();
+
+        if ($libroReservadoPorOtro) {
+            return response()->json(['message' => 'Este libro está actualmente reservado por otra persona.'], 409);
+        }
+
+        $carritoDetalle->reservado_hasta = now()->addMinutes(15);
+        $carritoDetalle->save();
+
+        return response()->json([
+            'message' => 'Reserva renovada con éxito.',
+            'reservado_hasta' => $carritoDetalle->reservado_hasta,
+        ], 200);
+    }
 }

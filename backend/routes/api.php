@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LibroController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\CarritoController;
+use App\Http\Controllers\PaypalController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -42,4 +43,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/carrito', [CarritoController::class, 'showCarrito']);
     Route::post('/carrito/add', [CarritoController::class, 'addToCart']);
     Route::delete('/carrito/remove/{id}', [CarritoController::class, 'removeItem']);
+    Route::post('/carrito/renew/{id}', [CarritoController::class, 'renewReservation']);
+
+    Route::post('/paypal/checkout/start', [PaypalController::class, 'startPayPalCheckout']);
 });
+
+Route::get('/paypal/capture', [PaypalController::class, 'capturePayPalPayment'])->name('paypal.capture');
+Route::get('/paypal/cancel', [PaypalController::class, 'paymentCancel'])->name('paypal.cancel');
+Route::get('/pedido/exito/{id}', function ($id) {
+    return view('pedido.exito', ['pedidoId' => $id]);
+})->name('pedido.exito');

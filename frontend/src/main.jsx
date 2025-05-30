@@ -89,6 +89,10 @@ const router = createBrowserRouter([
       {
         path: '/carrito',
         element: <Carrito></Carrito>
+      },
+      {
+        path: '*',
+        element: <Home></Home>
       }
     ]
   }

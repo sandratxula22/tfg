@@ -73,44 +73,33 @@ function Home() {
                 precio: precio,
             }),
         })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        const error = new Error(data.message || 'Error al añadir al carrito');
-                        error.statusCode = response.status;
-                        throw error;
-                    });
-                }
-                return response.json();
-            })
-            .then(data => {
-                //console.log(data);
-                if (data.already_in_cart) {
-                    Swal.fire({
-                        icon: 'info',
-                        title: '¡Ya está en el carrito!',
-                        text: 'Este libro ya se encuentra en tu carrito y está reservado.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Reservado!',
-                        text: 'El libro ha sido reservado por 15 minutos.',
-                        showConfirmButton: false,
-                        timer: 1500
-                    });
-                    fetchLibros();
-                }
-            })
-            .catch(error => {
-                Swal.fire({
-                    icon: 'error',
-                    title: '¡Oops!',
-                    text: `Error al añadir al carrito: ${error.message}`,
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    const error = new Error(data.message || 'Error al añadir al carrito');
+                    error.statusCode = response.status;
+                    throw error;
                 });
+            }
+            return response.json();
+        })
+        .then(data => {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Reservado!',
+                text: data.message,
+                showConfirmButton: false,
+                timer: 1500
             });
+            fetchLibros();
+        })
+        .catch(error => {
+            Swal.fire({
+                icon: 'error',
+                title: '¡Oops!',
+                text: `Error al añadir al carrito: ${error.message}`,
+            });
+        });
     };
 
     return (
@@ -136,22 +125,16 @@ function Home() {
                                     <strong className="text-danger">{libro.precio}€</strong>
                                 </p>
                                 <div className="mt-3 d-grid gap-2">
-                                    {libro.esta_en_mi_carrito && !libro.esta_reservado && (
-                                        <p className="mt-1 text-info small">En tu carrito</p>
-                                    )}
-                                    {libro.esta_reservado && !libro.esta_en_mi_carrito && (
+                                    {libro.esta_reservado && (
                                         <p className="mt-1 text-warning small">Reservado</p>
-                                    )}
-                                    {libro.esta_en_mi_carrito && libro.reserva_expirada_en_mi_carrito && (
-                                        <p className="mt-1 text-warning small">Reserva expirada</p>
                                     )}
                                     <Link to={`/libro/${libro.id}`} className="btn btn-outline-primary btn-sm">Ver detalles</Link>
                                     <button
                                         className="btn btn-success btn-sm"
                                         onClick={() => handleAddToCart(libro.id, libro.precio)}
-                                        disabled={libro.esta_reservado && !libro.esta_en_mi_carrito}
+                                        disabled={libro.esta_reservado}
                                     >
-                                        {libro.esta_en_mi_carrito && libro.reserva_expirada_en_mi_carrito ? 'Reservar' : (libro.esta_en_mi_carrito ? 'En carrito' : (libro.esta_reservado ? 'Reservado' : 'Añadir'))}
+                                        {libro.esta_reservado ? 'Reservado' : 'Añadir'}
                                     </button>
                                 </div>
                             </div>
