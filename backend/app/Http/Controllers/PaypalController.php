@@ -99,17 +99,16 @@ class PaypalController extends Controller
                 DB::commit();
                 foreach ($response->result->links as $link) {
                     if ($link->rel === 'approve') {
-                        return response()->json(['approval_url' => $link->href], 200);
+                        return response()->json(['approval_url' => $link->href, 'pedido_id' => $pendingOrder->id], 200);
                     }
                 }
             }
 
             DB::rollBack();
-            Log::error('Error al crear la orden de PayPal: ' . json_encode($response->result));
             return response()->json(['message' => 'Error al crear la orden de PayPal'], 500);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error al conectar con PayPal: ' . $e->getMessage());
+            Log::error('Error al iniciar checkout PayPal: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json(['message' => 'Error al conectar con PayPal: ' . $e->getMessage()], 500);
         }
     }
@@ -118,6 +117,10 @@ class PaypalController extends Controller
     {
         $orderId = $request->query('token');
 
+        if (!$orderId) {
+            return redirect(env('VITE_FRONTEND_URL') . '/carrito?payment=error&message=No se recibio el token de PayPal');
+        }
+
         $requestPayPal = new OrdersCaptureRequest($orderId);
         $requestPayPal->prefer('return=representation');
 
@@ -125,102 +128,98 @@ class PaypalController extends Controller
             $client = $this->getPayPalClient();
             $response = $client->execute($requestPayPal);
 
-            Log::info('Respuesta completa de PayPal Capture: ' . json_encode($response->result, JSON_PRETTY_PRINT));
+            if ($response->statusCode === 201 || $response->statusCode === 200) {
+                $processResult = $this->processOrderAfterPayment($response->result);
 
-            if ($response->statusCode === 201) {
-                return $this->processOrderAfterPayment($response->result);
+                if ($processResult instanceof \Illuminate\Http\JsonResponse) {
+                    return redirect(env('VITE_FRONTEND_URL') . '/carrito?payment=error&message=' . urlencode($processResult->getData()->message));
+                }
+
+                // Obtener el ID del pedido para pasarlo a la URL
+                $pedido = Pedido::where('payment_id', $orderId)->first();
+                $pedidoId = $pedido ? $pedido->id : null;
+
+                // --- CAMBIO CLAVE AQUÍ: Redirigir a /pedidos con el ID del pedido ---
+                return redirect(env('VITE_FRONTEND_URL') . '/pedidos?payment=success&pedido_id=' . $pedidoId);
+
+            } else {
+                Log::error('Error al capturar el pago PayPal: ' . $response->statusCode . ' - ' . json_encode($response->result));
+                return redirect(env('VITE_FRONTEND_URL') . '/carrito?payment=error&message=Error al capturar el pago de PayPal');
             }
-
-            return redirect('/payment/cancelled')->with('message', 'Error al capturar el pago de PayPal.');
         } catch (\Exception $e) {
-            Log::error('Error al capturar el pago de PayPal: ' . $e->getMessage());
-            return redirect('/payment/cancelled')->with('message', 'Error al capturar el pago: ' . $e->getMessage());
+            Log::error('Excepcion al capturar el pago PayPal: ' . $e->getMessage(), ['exception' => $e]);
+            return redirect(env('VITE_FRONTEND_URL') . '/carrito?payment=error&message=' . urlencode('Error al capturar el pago: ' . $e->getMessage()));
         }
     }
 
     protected function processOrderAfterPayment($paymentResult)
     {
         $paypalOrderId = $paymentResult->id;
-        Log::info('processOrderAfterPayment iniciado para PayPal Order ID: ' . $paypalOrderId);
-
-        $pedido = null;
         try {
             $pedido = Pedido::where('payment_id', $paypalOrderId)->firstOrFail();
-            Log::info('Pedido local encontrado con ID: ' . $pedido->id . ' y usuario ID: ' . $pedido->id_usuario);
             $userId = $pedido->id_usuario;
-        } catch (\Exception $e) {
-            Log::error('Error al encontrar el pedido local: ' . $e->getMessage());
-            return redirect('/carrito')->with('message', 'Error al verificar tu pedido.');
-        }
 
-        DB::beginTransaction();
-        try {
+            DB::beginTransaction();
+
             $carrito = Carrito::where('id_usuario', $userId)
                 ->where('estado', 'activo')
                 ->with('detalles.libro')
                 ->first();
 
-            Log::info('Carrito encontrado: ' . ($carrito ? 'Sí' : 'No'));
             if (!$carrito) {
                 DB::rollBack();
-                Log::warning('Carrito no encontrado para usuario ID: ' . $userId);
-                return redirect('/carrito')->with('message', 'Tu carrito no se encontró.');
+                return response()->json(['message' => 'Tu carrito no se encontró.'], 400);
             }
 
-            // Check book availability (using 'disponible') BEFORE updating order and creating details
             foreach ($carrito->detalles as $detalle) {
                 $libro = Libro::lockForUpdate()->find($detalle->id_libro);
-                Log::info('Verificando disponibilidad para libro ID: ' . $libro->id . ', Disponible: ' . ($libro->disponible ? 'Sí' : 'No') . ', Reservado hasta: ' . $detalle->reservado_hasta);
                 if (!$libro || !$libro->disponible) {
                     DB::rollBack();
-                    Log::error('Libro no disponible: ' . $detalle->libro->titulo . ' (ID: ' . $libro->id . ')');
-                    return redirect('/carrito')->with('message', 'El libro "' . $detalle->libro->titulo . '" ya no está disponible.');
+                    return response()->json(['message' => 'El libro "' . $detalle->libro->titulo . '" ya no está disponible.'], 409);
                 }
 
-                // Check if the book is reserved by someone else
                 if ($detalle->reservado_hasta && now() < $detalle->reservado_hasta && $detalle->id_carrito !== $carrito->id) {
                     DB::rollBack();
-                    Log::error('Libro reservado por otra persona: ' . $detalle->libro->titulo . ' (ID: ' . $libro->id . ')');
-                    return redirect('/carrito')->with('message', 'El libro "' . $detalle->libro->titulo . '" está reservado por otra persona.');
+                    return response()->json(['message' => 'El libro "' . $detalle->libro->titulo . '" está reservado por otra persona.'], 409);
                 }
             }
 
             $pedido->update(['estado' => 'pagado']);
-            Log::info('Pedido ID: ' . $pedido->id . ' actualizado a estado: pagado');
 
             foreach ($carrito->detalles as $detalle) {
-                $libro = Libro::find($detalle->id_libro); // No need to lock again
+                $libro = Libro::find($detalle->id_libro);
                 Pedido_detalle::create([
                     'id_pedido' => $pedido->id,
                     'id_libro' => $libro->id,
                     'cantidad' => 1,
-                    'precio_unitario' => $detalle->precio,
+                    'precio' => $detalle->precio,
                 ]);
-                Log::info('Pedido detalle creado para libro ID: ' . $libro->id);
-                // Mark the book as not available after successful purchase
                 $libro->update(['disponible' => false]);
-                Log::info('Libro ID: ' . $libro->id . ' marcado como no disponible.');
             }
 
             Carrito_detalle::where('id_carrito', $carrito->id)->delete();
             $carrito->total = 0;
             $carrito->estado = 'completado';
             $carrito->save();
-            Log::info('Carrito del usuario ID: ' . $userId . ' vaciado y marcado como completado.');
 
             DB::commit();
-            Log::info('Transacción completada para pedido ID: ' . $pedido->id);
-
-            return response()->json(['message' => 'Pedido realizado con éxito', 'pedido_id' => $pedido->id], 200);
+            return true;
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error al procesar el pedido: ' . $e->getMessage());
-            return redirect('/carrito')->with('message', 'Error al procesar el pedido: ' . $e->getMessage());
+            Log::error('Error al procesar el pedido después del pago: ' . $e->getMessage(), ['exception' => $e]);
+            return response()->json(['message' => 'Error al procesar el pedido: ' . $e->getMessage()], 500);
         }
     }
 
     public function paymentCancel()
     {
-        return redirect('/carrito')->with('message', 'El pago con PayPal fue cancelado.');
+        $token = request()->query('token');
+        if ($token) {
+            $pedido = Pedido::where('payment_id', $token)->first();
+            if ($pedido) {
+                $pedido->update(['estado' => 'cancelado']);
+            }
+        }
+        return redirect(env('VITE_FRONTEND_URL') . '/carrito?payment=cancelled');
     }
 }

@@ -21,7 +21,8 @@ function Home() {
                 return response.json();
             })
             .then(data => {
-                setLibros(data);
+                const librosDisponibles = data.filter(libro => libro.disponible == true);
+                setLibros(librosDisponibles);
                 setLoading(false);
             })
             .catch(error => {

@@ -16,6 +16,11 @@ class Pedido extends Model
         'id_usuario',
     ];
 
+    public function detalles()
+    {
+        return $this->hasMany(Pedido_detalle::class, 'id_pedido');
+    }
+
     public function usuario()
     {
         return $this->belongsTo(Usuario::class, 'id_usuario');

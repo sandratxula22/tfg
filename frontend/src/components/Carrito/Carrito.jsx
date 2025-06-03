@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import moment from 'moment';
 
@@ -8,6 +8,9 @@ function Carrito() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    const location = useLocation();
+    const navigate = useNavigate();
 
     const fetchCarrito = useCallback(async () => {
         setLoading(true);
@@ -34,7 +37,45 @@ function Carrito() {
 
     useEffect(() => {
         fetchCarrito();
-    }, [fetchCarrito]);
+
+        const queryParams = new URLSearchParams(location.search);
+        const paymentStatus = queryParams.get('payment');
+        const pedidoId = queryParams.get('pedido_id');
+        const errorMessage = queryParams.get('message');
+
+
+        if (paymentStatus === 'success') {
+            Swal.fire({
+                icon: 'success',
+                title: '¡Pago Exitoso!',
+                text: 'Tu pedido ha sido procesado correctamente.',
+                showConfirmButton: false,
+                timer: 2000
+            }).then(() => {
+                navigate('/pedidos/' + pedidoId, { replace: true });
+            });
+        } else if (paymentStatus === 'cancelled') {
+            Swal.fire({
+                icon: 'info',
+                title: 'Pago Cancelado',
+                text: 'Has cancelado el proceso de pago.',
+                showConfirmButton: false,
+                timer: 2000
+            }).then(() => {
+                navigate('/carrito', { replace: true });
+            });
+        } else if (paymentStatus === 'error') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error en el Pago',
+                text: errorMessage || 'Hubo un error al procesar tu pago.',
+                showConfirmButton: false,
+                timer: 3000
+            }).then(() => {
+                navigate('/carrito', { replace: true });
+            });
+        }
+    }, [fetchCarrito, location.search, navigate]);
 
     const handleDeleteItem = async (itemId) => {
         const authToken = localStorage.getItem('authToken');
