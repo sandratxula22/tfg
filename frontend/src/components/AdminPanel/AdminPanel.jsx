@@ -1,18 +1,86 @@
-import React, { useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
+import Swal from 'sweetalert2';
 import './AdminPanel.css';
 
 function AdminPanel() {
-    const userRole = localStorage.getItem('userRole');
+    const [isAuthorized, setIsAuthorized] = useState(null);
     const navigate = useNavigate();
+    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    const checkUserAuthorization = useCallback(async () => {
+        const authToken = localStorage.getItem('authToken');
+
+        if (!authToken) {
+            setIsAuthorized(false);
+            navigate('/login', { replace: true, state: { from: window.location.pathname } });
+            return;
+        }
+
+        try {
+            const response = await fetch(`${VITE_API_BASE_URL}/api/user`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Accept': 'application/json',
+                },
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                if (data.rol === 'admin') {
+                    setIsAuthorized(true);
+                } else {
+                    setIsAuthorized(false);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Acceso Denegado',
+                        text: 'No tienes permisos de administrador.',
+                        timer: 2000
+                    });
+                    navigate('/', { replace: true });
+                }
+            } else if (response.status === 401) {
+                setIsAuthorized(false);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Sesión Expirada',
+                    text: 'Tu sesión ha expirado o es inválida. Por favor, inicia sesión de nuevo.',
+                    timer: 2000
+                });
+                localStorage.removeItem('authToken');
+                navigate('/login', { replace: true, state: { from: window.location.pathname } });
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Error al verificar el rol del usuario.');
+            }
+        } catch (error) {
+            console.error('Error durante la verificación de autorización:', error);
+            setIsAuthorized(false);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de Conexión',
+                text: 'No se pudo verificar tu autorización. Inténtalo de nuevo más tarde.',
+                timer: 3000
+            });
+            navigate('/', { replace: true });
+        }
+    }, [navigate, VITE_API_BASE_URL]);
 
     useEffect(() => {
-        if (userRole !== 'admin') {
-            navigate('/');
-        }
-    }, [userRole, navigate]);
+        checkUserAuthorization();
+    }, [checkUserAuthorization]);
 
-    if (userRole !== 'admin') {
+    if (isAuthorized === null) {
+        return (
+            <div className="flex min-h-screen items-center justify-center bg-gray-100">
+                <div className="spinner-border" role="status">
+                    <span className="visually-hidden">Cargando autorización...</span>
+                </div>
+            </div>
+        );
+    }
+
+    if (isAuthorized === false) {
         return null;
     }
 

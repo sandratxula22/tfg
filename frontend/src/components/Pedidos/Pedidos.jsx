@@ -12,14 +12,32 @@ function Pedidos() {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const authToken = localStorage.getItem('authToken');
+
+    useEffect(() => {
+        if (!authToken) {
+            navigate('/login', { replace: true, state: { from: location.pathname } });
+        }
+    }, [authToken, navigate, location.pathname]);
+
+    if (!authToken) {
+        return null;
+    }
+
     const fetchPedidos = useCallback(async () => {
         setLoading(true);
         setError(null);
-        const authToken = localStorage.getItem('authToken');
+        const currentAuthToken = localStorage.getItem('authToken');
+        if (!currentAuthToken) {
+            setLoading(false);
+            setError('Usuario no autenticado. Por favor, inicia sesión.');
+            return;
+        }
+
         try {
             const response = await fetch(`${VITE_API_BASE_URL}/api/pedidos`, {
                 headers: {
-                    'Authorization': `Bearer ${authToken}`,
+                    'Authorization': `Bearer ${currentAuthToken}`,
                 },
             });
             if (!response.ok) {
@@ -27,7 +45,7 @@ function Pedidos() {
                 throw new Error(errorData.message || 'Error al cargar tus pedidos');
             }
             const data = await response.json();
-            const pedidosPagados = data.filter(pedido => pedido.estado == 'pagado');
+            const pedidosPagados = data.filter(pedido => pedido.estado === 'pagado');
             setPedidos(pedidosPagados);
         } catch (err) {
             setError(err.message);
@@ -37,7 +55,9 @@ function Pedidos() {
     }, [VITE_API_BASE_URL]);
 
     useEffect(() => {
-        fetchPedidos();
+        if (authToken) {
+            fetchPedidos();
+        }
 
         const queryParams = new URLSearchParams(location.search);
         const paymentStatus = queryParams.get('payment');
@@ -65,7 +85,7 @@ function Pedidos() {
                 navigate('/pedidos', { replace: true });
             });
         }
-    }, [fetchPedidos, location.search, navigate]);
+    }, [fetchPedidos, location.search, navigate, authToken]);
 
     if (loading) {
         return (

@@ -12,14 +12,32 @@ function Carrito() {
     const location = useLocation();
     const navigate = useNavigate();
 
+    const authToken = localStorage.getItem('authToken');
+
+    useEffect(() => {
+        if (!authToken) {
+            navigate('/login', { replace: true, state: { from: location.pathname } });
+        }
+    }, [authToken, navigate, location.pathname]);
+
+    if (!authToken) {
+        return null;
+    }
+
     const fetchCarrito = useCallback(async () => {
         setLoading(true);
         setError(null);
-        const authToken = localStorage.getItem('authToken');
+        const currentAuthToken = localStorage.getItem('authToken');
+        if (!currentAuthToken) {
+            setLoading(false);
+            setError('Usuario no autenticado. Por favor, inicia sesión.');
+            return;
+        }
+
         try {
             const response = await fetch(`${VITE_API_BASE_URL}/api/carrito`, {
                 headers: {
-                    'Authorization': `Bearer ${authToken}`,
+                    'Authorization': `Bearer ${currentAuthToken}`,
                 },
             });
             if (!response.ok) {
@@ -36,13 +54,14 @@ function Carrito() {
     }, [VITE_API_BASE_URL]);
 
     useEffect(() => {
-        fetchCarrito();
+        if (authToken) {
+            fetchCarrito();
+        }
 
         const queryParams = new URLSearchParams(location.search);
         const paymentStatus = queryParams.get('payment');
         const pedidoId = queryParams.get('pedido_id');
         const errorMessage = queryParams.get('message');
-
 
         if (paymentStatus === 'success') {
             Swal.fire({
@@ -52,7 +71,7 @@ function Carrito() {
                 showConfirmButton: false,
                 timer: 2000
             }).then(() => {
-                navigate('/pedidos/' + pedidoId, { replace: true });
+                navigate('/pedidos', { replace: true });
             });
         } else if (paymentStatus === 'cancelled') {
             Swal.fire({
@@ -75,15 +94,19 @@ function Carrito() {
                 navigate('/carrito', { replace: true });
             });
         }
-    }, [fetchCarrito, location.search, navigate]);
+    }, [fetchCarrito, location.search, navigate, authToken]);
 
     const handleDeleteItem = async (itemId) => {
-        const authToken = localStorage.getItem('authToken');
+        const currentAuthToken = localStorage.getItem('authToken');
+        if (!currentAuthToken) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No estás autenticado para realizar esta acción.' });
+            return;
+        }
         try {
             const response = await fetch(`${VITE_API_BASE_URL}/api/carrito/remove/${itemId}`, {
                 method: 'DELETE',
                 headers: {
-                    'Authorization': `Bearer ${authToken}`,
+                    'Authorization': `Bearer ${currentAuthToken}`,
                 },
             });
             if (!response.ok) {
@@ -102,23 +125,27 @@ function Carrito() {
             Swal.fire({
                 icon: 'error',
                 title: '¡Error!',
-                text: `Error al eliminar el item: ${error}`,
+                text: `Error al eliminar el item: ${error.message}`,
             });
         }
     };
 
     const handleRenewReservation = async (itemId) => {
-        const authToken = localStorage.getItem('authToken');
+        const currentAuthToken = localStorage.getItem('authToken');
+        if (!currentAuthToken) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No estás autenticado para realizar esta acción.' });
+            return;
+        }
         try {
             const response = await fetch(`${VITE_API_BASE_URL}/api/carrito/renew/${itemId}`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${authToken}`,
+                    'Authorization': `Bearer ${currentAuthToken}`,
                 },
             });
             if (!response.ok) {
                 const errorData = await response.json();
-                if (response.status === 409 && errorData.message.includes('reservado por otra persona')) {
+                if (response.status === 409 && (errorData.message.includes('reservado por otra persona') || errorData.message.includes('no está disponible para la compra'))) {
                     Swal.fire({
                         icon: 'warning',
                         title: 'Lo sentimos',
@@ -144,14 +171,20 @@ function Carrito() {
             Swal.fire({
                 icon: 'error',
                 title: '¡Error!',
-                text: `Error al renovar la reserva: ${error}`,
+                text: `Error al renovar la reserva: ${error.message}`,
             });
         }
     };
 
-    const getReservationStatus = (reservedUntil, itemId) => {
-        if (reservedUntil) {
-            const reservationEndTimeUTC = moment.utc(reservedUntil);
+    const getReservationStatus = (item) => {
+        const { reservado_hasta, id, libro } = item;
+
+        if (!libro.disponible) {
+            return <span className="text-danger">Este libro no está disponible.</span>;
+        }
+
+        if (reservado_hasta) {
+            const reservationEndTimeUTC = moment.utc(reservado_hasta);
             const nowUTC = moment.utc();
             const timeLeft = moment.duration(reservationEndTimeUTC.diff(nowUTC));
 
@@ -164,7 +197,8 @@ function Carrito() {
                         <span className="text-danger">Reserva expirada</span>
                         <button
                             className="btn btn-sm btn-outline-secondary ms-2"
-                            onClick={() => handleRenewReservation(itemId)}
+                            onClick={() => handleRenewReservation(id)}
+                            disabled={!libro.disponible}
                         >
                             Renovar
                         </button>
@@ -176,12 +210,17 @@ function Carrito() {
     };
 
     const handleCheckout = async () => {
-        const authToken = localStorage.getItem('authToken');
+        const currentAuthToken = localStorage.getItem('authToken');
+        if (!currentAuthToken) {
+            Swal.fire({ icon: 'error', title: 'Error', text: 'No estás autenticado para realizar esta acción.' });
+            return;
+        }
+
         try {
             const response = await fetch(`${VITE_API_BASE_URL}/api/paypal/checkout/start`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${authToken}`,
+                    'Authorization': `Bearer ${currentAuthToken}`,
                     'Content-Type': 'application/json',
                 },
             });
@@ -217,6 +256,10 @@ function Carrito() {
         }
     };
 
+    const isCheckoutDisabled = carritoItems.length === 0 || carritoItems.some(item =>
+        !item.libro.disponible || (item.reservado_hasta && moment.utc(item.reservado_hasta).isSameOrBefore(moment.utc()))
+    );
+
     return (
         <div className="container py-5">
             <h1 className="mb-4">Tu Carrito</h1>
@@ -241,9 +284,9 @@ function Carrito() {
                             <div>
                                 <h6 className="my-0">{item.libro.titulo}</h6>
                                 <small className="text-muted">{item.libro.autor}</small>
-                                {item.reservado_hasta && (
-                                    <div className="mt-1 small">{getReservationStatus(item.reservado_hasta, item.id)}</div>
-                                )}
+                                <div className="mt-1 small">
+                                    {getReservationStatus(item)}
+                                </div>
                             </div>
                             <div>
                                 <span className="badge bg-primary rounded-pill">{item.precio}€</span>
@@ -265,7 +308,11 @@ function Carrito() {
             )}
             {carritoItems.length > 0 && (
                 <div className="mt-3">
-                    <button className="btn btn-success me-2" onClick={handleCheckout}>
+                    <button
+                        className="btn btn-success me-2"
+                        onClick={handleCheckout}
+                        disabled={isCheckoutDisabled}
+                    >
                         Pagar con PayPal
                     </button>
                 </div>

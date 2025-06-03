@@ -3,17 +3,15 @@ import { Navbar, Nav, Container } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import LogoutButton from '../Login/LogoutButton';
 import './Header.css';
+import { useAuth } from '../../contexts/AuthContext';
 
 function HeaderComponent() {
     const navigate = useNavigate();
-    const isLoggedIn = !!localStorage.getItem('authToken');
-    const userRole = localStorage.getItem('userRole');
+    const { isAuthenticated, userRole, logout } = useAuth();
 
     const handleLogoutSuccess = () => {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('userRole');
+        logout();
         navigate('/');
-        window.dispatchEvent(new Event('storage'));
     };
 
     return (
@@ -38,14 +36,14 @@ function HeaderComponent() {
                         )}
                     </Nav>
                     <Nav className="ml-auto align-items-center">
-                        {isLoggedIn && (
+                        {isAuthenticated && (
                             <Nav.Link as={Link} to="/carrito" className="p-0">
                                 <span className="material-symbols-outlined" style={{ fontSize: '24px', color: 'white' }}>
                                     shopping_cart
                                 </span>
                             </Nav.Link>
                         )}
-                        {isLoggedIn ? (
+                        {isAuthenticated ? (
                             <LogoutButton onLogout={handleLogoutSuccess} className="ms-2" />
                         ) : (
                             <Nav.Link as={Link} to="/login" className="ms-2">

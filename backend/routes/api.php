@@ -26,6 +26,17 @@ Route::get('/libros/{id}', [LibroController::class, 'showBookById']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/carrito', [CarritoController::class, 'showCart']);
+    Route::post('/carrito/add', [CarritoController::class, 'addToCart']);
+    Route::delete('/carrito/remove/{id}', [CarritoController::class, 'removeItem']);
+    Route::post('/carrito/renew/{id}', [CarritoController::class, 'renewReservation']);
+
+    Route::post('/paypal/checkout/start', [PaypalController::class, 'startPayPalCheckout']);
+
+    Route::get('/pedidos', [PedidoController::class, 'showOrders']);
+});
+
+Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
     Route::delete('/admin/libros/delete/{id}', [LibroController::class, 'deleteBook']);
     Route::post('/admin/libros/edit/{id}', [LibroController::class, 'editBook']);
     Route::post('/admin/libros/create', [LibroController::class, 'createBook']);
@@ -40,15 +51,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/admin/usuarios/create', [UsuarioController::class, 'createUser']);
     Route::delete('/admin/usuarios/delete/{id}', [UsuarioController::class, 'deleteUser']);
     Route::put('/admin/usuarios/edit/{id}', [UsuarioController::class, 'editUser']);
-
-    Route::get('/carrito', [CarritoController::class, 'showCarrito']);
-    Route::post('/carrito/add', [CarritoController::class, 'addToCart']);
-    Route::delete('/carrito/remove/{id}', [CarritoController::class, 'removeItem']);
-    Route::post('/carrito/renew/{id}', [CarritoController::class, 'renewReservation']);
-
-    Route::post('/paypal/checkout/start', [PaypalController::class, 'startPayPalCheckout']);
-
-    Route::get('/pedidos', [PedidoController::class, 'index']);
 });
 
 Route::get('/api/paypal/capture', [PaypalController::class, 'capturePayPalPayment'])->name('paypal.capture');

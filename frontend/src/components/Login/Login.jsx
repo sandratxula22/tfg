@@ -1,12 +1,17 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
+import Swal from 'sweetalert2';
+import { useAuth } from '../../contexts/AuthContext';
 
 function Login() {
     const [correo, setCorreo] = useState('');
     const [contrasena, setContrasena] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const location = useLocation();
     const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    const { checkAuthStatus } = useAuth();
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -17,7 +22,7 @@ function Login() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     correo,
                     contrasena,
                 }),
@@ -26,16 +31,37 @@ function Login() {
             if (!response.ok) {
                 const errorData = await response.json();
                 setError(errorData.message || 'Error al iniciar sesión');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de inicio de sesión',
+                    text: errorData.message || 'Credenciales incorrectas.',
+                });
                 return;
             }
 
             const data = await response.json();
             localStorage.setItem('authToken', data.access_token);
-            localStorage.setItem('userRole', data.rol);
-            navigate('/');
+
+            Swal.fire({
+                icon: 'success',
+                title: '¡Inicio de sesión exitoso!',
+                showConfirmButton: false,
+                timer: 1500
+            });
+
+            await checkAuthStatus();
+
+            const from = location.state?.from?.pathname || '/';
+            navigate(from, { replace: true });
+
         } catch (error) {
             setError('Error de conexión con el servidor');
             console.error('Login error:', error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'No se pudo conectar al servidor. Inténtalo de nuevo más tarde.',
+            });
         }
     };
 
