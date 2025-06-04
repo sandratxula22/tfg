@@ -68,7 +68,7 @@ function Pedidos() {
             Swal.fire({
                 icon: 'success',
                 title: '¡Pago Exitoso!',
-                text: `Tu compra ha sido procesada correctamente. ID de pedido: ${lastPedidoId || 'N/A'}`,
+                text: `Tu compra ha sido procesada correctamente.`,
                 showConfirmButton: false,
                 timer: 3000
             }).then(() => {
@@ -124,8 +124,22 @@ function Pedidos() {
                                     {pedido.estado.charAt(0).toUpperCase() + pedido.estado.slice(1)}
                                 </span>
                             </div>
-                            <p className="text-muted mb-1">Fecha: {moment(pedido.fecha_pedido).format('DD/MM/YYYY HH:mm')}</p>
-                            <p className="mb-2">Total: <strong>{parseFloat(pedido.total).toFixed(2)}€</strong></p>
+                            <p className="text-muted mb-1">Fecha: {moment(pedido.created_at).format('DD/MM/YYYY HH:mm')}</p>
+
+                            {pedido.nombre_envio && (
+                                <div className="mt-2 mb-2 p-2 bg-light rounded">
+                                    <strong>Envío a:</strong>
+                                    <p className="mb-0">
+                                        {pedido.nombre_envio} {pedido.apellidos_envio}
+                                    </p>
+                                    <p className="mb-0">
+                                        {pedido.direccion_envio}
+                                    </p>
+                                    <p className="mb-0">
+                                        {pedido.codigo_postal_envio} {pedido.ciudad_envio}, {pedido.pais_envio}
+                                    </p>
+                                </div>
+                            )}
 
                             {pedido.detalles && pedido.detalles.length > 0 && (
                                 <div className="mt-2">
@@ -133,11 +147,16 @@ function Pedidos() {
                                     <ul className="list-group list-group-flush">
                                         {pedido.detalles.map(detalle => (
                                             <li key={detalle.id} className="list-group-item d-flex justify-content-between align-items-center py-1">
-                                                <span>{detalle.libro.titulo}</span>
+                                                <span>{detalle.libro.titulo} - {detalle.libro.autor}</span>
                                                 <span>{parseFloat(detalle.precio).toFixed(2)}€</span>
                                             </li>
                                         ))}
                                     </ul>
+                                    <div className="d-flex justify-content-end mt-2">
+                                        <p className="fs-5 fw-bold text-success mb-0">
+                                            {parseFloat(pedido.total).toFixed(2)}€
+                                        </p>
+                                    </div>
                                 </div>
                             )}
                         </li>

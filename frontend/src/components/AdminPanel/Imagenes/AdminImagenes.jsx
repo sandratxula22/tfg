@@ -1,35 +1,49 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
+import Swal from 'sweetalert2';
 import '../AdminPanel.css';
 import axios from 'axios';
 
 function AdminImagenes() {
     const [imagenes, setImagenes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const navigate = useNavigate();
     const [mensaje, setMensaje] = useState('');
 
-    useEffect(() => {
-        const fetchImagenes = async () => {
-            try {
-                const token = localStorage.getItem('authToken');
-                const response = await fetch(`${VITE_API_BASE_URL}/api/admin/images`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                    },
-                });
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                setImagenes(data);
-            } catch (error) {
-                console.error("Error fetching imágenes:", error);
+    const fetchImagenes = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const token = localStorage.getItem('authToken');
+            const response = await fetch(`${VITE_API_BASE_URL}/api/admin/images`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                },
+            });
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
             }
-        };
+            const data = await response.json();
+            setImagenes(data);
+        } catch (err) {
+            console.error("Error fetching imágenes:", err);
+            setError(err.message || "Error al cargar las imágenes.");
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de carga',
+                text: err.message || 'No se pudieron cargar las imágenes.',
+            });
+        } finally {
+            setLoading(false);
+        }
+    }, [VITE_API_BASE_URL]);
 
+    useEffect(() => {
         fetchImagenes();
 
         const editSuccessMessage = localStorage.getItem('imagenEditSuccess');
@@ -37,14 +51,24 @@ function AdminImagenes() {
             setMensaje(editSuccessMessage);
             localStorage.removeItem('imagenEditSuccess');
         }
-    }, [VITE_API_BASE_URL]);
+    }, [VITE_API_BASE_URL, fetchImagenes]);
 
     const handleEditarImagen = (id) => {
         navigate(`/libros/images-edit/${id}`);
     };
 
     const handleBorrarImagen = async (id) => {
-        if (window.confirm(`¿Estás seguro de que quieres borrar la imagen con ID ${id}?`)) {
+        const result = await Swal.fire({
+            title: `¿Estás seguro de que quieres borrar la imagen con ID ${id}?`,
+            text: "¡Esta acción no se puede deshacer!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Sí, borrarla'
+        });
+
+        if (result.isConfirmed) {
             try {
                 const token = localStorage.getItem('authToken');
                 const response = await axios.delete(`${VITE_API_BASE_URL}/api/admin/images/delete/${id}`, {
@@ -55,14 +79,35 @@ function AdminImagenes() {
 
                 if (response.status === 200) {
                     setImagenes(imagenes.filter(imagen => imagen.id !== id));
-                    setMensaje('Imagen borrada con éxito.');
+                    Swal.fire(
+                        '¡Borrada!',
+                        'La imagen ha sido borrada exitosamente.',
+                        'success'
+                    );
                 } else {
-                    console.error("Error al borrar la imagen:", response.data);
-                    alert('Error al borrar la imagen');
+                    const errorData = response.data;
+                    console.error("Error al borrar la imagen:", errorData);
+                    Swal.fire(
+                        'Error',
+                        errorData.message || 'Error al borrar la imagen.',
+                        'error'
+                    );
                 }
             } catch (error) {
+                if (error.response && error.response.data) {
+                    Swal.fire(
+                        'Error',
+                        error.response.data.message || 'Error al borrar la imagen.',
+                        'error'
+                    );
+                } else {
+                    Swal.fire(
+                        'Error',
+                        'Error al conectar con la API o permiso denegado.',
+                        'error'
+                    );
+                }
                 console.error("Error al conectar con la API:", error);
-                alert('Error al conectar con la API');
             }
         }
     };
@@ -70,6 +115,16 @@ function AdminImagenes() {
     const handleSubirImagen = () => {
         navigate('/libros/images-upload');
     };
+
+    if (loading) {
+        return (
+            <div className="text-center py-5">
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Cargando imágenes...</span>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div>
@@ -88,18 +143,24 @@ function AdminImagenes() {
                     </tr>
                 </thead>
                 <tbody>
-                    {imagenes.map(imagen => (
-                        <tr key={imagen.id}>
-                            <td>{imagen.titulo_libro}</td>
-                            <td>{imagen.url}</td>
-                            <td>
-                                <Button className="btn btn-primary btn-sm mr-2" onClick={() => handleEditarImagen(imagen.id)}>Editar</Button>
-                            </td>
-                            <td>
-                                <Button className="btn btn-danger btn-sm" onClick={() => handleBorrarImagen(imagen.id)}>Borrar</Button>
-                            </td>
+                    {imagenes.length === 0 ? (
+                        <tr>
+                            <td colSpan="5" className="text-center">No hay imágenes para mostrar.</td>
                         </tr>
-                    ))}
+                    ) : (
+                        imagenes.map(imagen => (
+                            <tr key={imagen.id}>
+                                <td>{imagen.titulo_libro}</td>
+                                <td>{imagen.url}</td>
+                                <td>
+                                    <Button className="btn btn-primary btn-sm me-2" onClick={() => handleEditarImagen(imagen.id)}>Editar</Button>
+                                </td>
+                                <td>
+                                    <Button className="btn btn-danger btn-sm" onClick={() => handleBorrarImagen(imagen.id)}>Borrar</Button>
+                                </td>
+                            </tr>
+                        ))
+                    )}
                 </tbody>
             </Table>
         </div>

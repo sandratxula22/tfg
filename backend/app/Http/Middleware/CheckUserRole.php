@@ -17,7 +17,7 @@ class CheckUserRole
 
         $user = Auth::user();
 
-        if (!in_array($user->role, $roles)) {
+        if (!in_array($user->rol, $roles)) {
             return response()->json(['message' => 'Acceso no autorizado. Se requiere un rol específico.'], 403);
         }
 

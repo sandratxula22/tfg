@@ -14,6 +14,12 @@ class Pedido extends Model
         'estado',
         'total',
         'id_usuario',
+        'nombre_envio',
+        'apellidos_envio',
+        'direccion_envio',
+        'ciudad_envio',
+        'codigo_postal_envio',
+        'pais_envio',
     ];
 
     public function detalles()

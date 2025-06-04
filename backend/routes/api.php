@@ -36,7 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/pedidos', [PedidoController::class, 'showOrders']);
 });
 
-Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+Route::middleware(['auth:sanctum', 'rol:admin'])->group(function () {
     Route::delete('/admin/libros/delete/{id}', [LibroController::class, 'deleteBook']);
     Route::post('/admin/libros/edit/{id}', [LibroController::class, 'editBook']);
     Route::post('/admin/libros/create', [LibroController::class, 'createBook']);

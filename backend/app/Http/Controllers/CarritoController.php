@@ -30,7 +30,52 @@ class CarritoController extends Controller
                 return response()->json(['detalles' => []]);
             }
 
-            return response()->json(['detalles' => $carrito->detalles]);
+            $now = now();
+            $detallesConEstado = $carrito->detalles->map(function ($detalle) use ($idUsuario, $now) {
+                $libro = $detalle->libro;
+                $reservadoHasta = $detalle->reservado_hasta ? Carbon::parse($detalle->reservado_hasta) : null;
+
+                $canBePurchased = true;
+                $statusMessage = '';
+                $isReservedByOther = false;
+                $reservationExpiredForCurrentUser = false;
+
+                if (!$libro || !$libro->disponible) {
+                    $canBePurchased = false;
+                    $statusMessage = 'Este libro ya no está disponible.';
+                } else {
+                    $isReservedByOther = Carrito_detalle::where('id_libro', $detalle->id_libro)
+                        ->where('reservado_hasta', '>', $now)
+                        ->where('id', '!=', $detalle->id)
+                        ->whereHas('carrito', function ($query) use ($idUsuario) {
+                            $query->where('estado', 'activo')
+                                  ->where('id_usuario', '!=', $idUsuario);
+                        })
+                        ->exists();
+
+                    if ($isReservedByOther) {
+                        $canBePurchased = false;
+                        $statusMessage = 'Este libro está reservado por otra persona.';
+                    } else {
+                        if ($reservadoHasta && $reservadoHasta->isPast()) {
+                            $statusMessage = 'Reserva expirada';
+                            $reservationExpiredForCurrentUser = true;
+                        } elseif ($reservadoHasta) {
+                            $timeLeft = $reservadoHasta->diffInMinutes($now, false);
+                            $statusMessage = 'Reservado por ' . abs($timeLeft) . ' minutos';
+                        }
+                    }
+                }
+
+                $detalle->can_be_purchased = $canBePurchased;
+                $detalle->status_message = $statusMessage;
+                $detalle->is_reserved_by_other = $isReservedByOther;
+                $detalle->reservation_expired_for_current_user = $reservationExpiredForCurrentUser;
+
+                return $detalle;
+            });
+
+            return response()->json(['detalles' => $detallesConEstado]);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error al cargar el carrito: ' . $e->getMessage()], 500);
         }
@@ -60,6 +105,19 @@ class CarritoController extends Controller
                 return response()->json(['message' => 'Este libro no está disponible para la compra en este momento.'], 409);
             }
 
+            $libroReservadoPorOtro = Carrito_detalle::where('id_libro', $idLibro)
+                ->where('reservado_hasta', '>', now())
+                ->whereHas('carrito', function ($query) use ($idUsuario) {
+                    $query->where('estado', 'activo')
+                          ->where('id_usuario', '!=', $idUsuario);
+                })
+                ->exists();
+
+            if ($libroReservadoPorOtro) {
+                DB::rollBack();
+                return response()->json(['message' => 'Este libro está actualmente reservado por otro usuario.'], 409);
+            }
+
             $carrito = Carrito::firstOrCreate(['id_usuario' => $idUsuario, 'estado' => 'activo'], ['total' => 0]);
 
             $detalleExistente = Carrito_detalle::where('id_carrito', $carrito->id)
@@ -68,17 +126,8 @@ class CarritoController extends Controller
 
             if ($detalleExistente) {
                 $reservadoHasta = $detalleExistente->reservado_hasta ? Carbon::parse($detalleExistente->reservado_hasta) : null;
-                if ($reservadoHasta && $reservadoHasta->isPast()) {
-                    $libroReservadoPorOtro = Carrito_detalle::where('id_libro', $idLibro)
-                        ->where('reservado_hasta', '>', now())
-                        ->where('id', '!=', $detalleExistente->id)
-                        ->exists();
-
-                    if ($libroReservadoPorOtro) {
-                        DB::rollBack();
-                        return response()->json(['message' => 'Este libro está actualmente reservado por otra persona.'], 409);
-                    }
-
+                
+                if (!$reservadoHasta || $reservadoHasta->isPast()) {
                     $detalleExistente->reservado_hasta = now()->addMinutes(15);
                     $detalleExistente->save();
                     $carrito->total = Carrito_detalle::where('id_carrito', $carrito->id)->sum('precio');
@@ -87,18 +136,8 @@ class CarritoController extends Controller
                     return response()->json(['message' => 'Reserva renovada', 'carrito_detalle' => $detalleExistente], 200);
                 } else {
                     DB::rollBack();
-                    return response()->json(['message' => 'Este libro ya está en tu carrito'], 200, ['already_in_cart' => true]);
+                    return response()->json(['message' => 'Este libro ya está en tu carrito y tu reserva está activa.'], 200, ['already_in_cart' => true]);
                 }
-            }
-
-            $libroReservado = Carrito_detalle::where('id_libro', $idLibro)
-                ->where('reservado_hasta', '>', now())
-                ->where('id_carrito', '!=', $carrito->id)
-                ->exists();
-
-            if ($libroReservado) {
-                DB::rollBack();
-                return response()->json(['message' => 'Este libro está actualmente reservado por otro usuario'], 409);
             }
 
             $carritoDetalle = new Carrito_detalle();
@@ -191,6 +230,10 @@ class CarritoController extends Controller
             $libroReservadoPorOtro = Carrito_detalle::where('id_libro', $carritoDetalle->id_libro)
                 ->where('reservado_hasta', '>', now())
                 ->where('id', '!=', $carritoDetalle->id)
+                ->whereHas('carrito', function ($query) use ($idUsuario) {
+                    $query->where('estado', 'activo')
+                          ->where('id_usuario', '!=', $idUsuario);
+                })
                 ->exists();
 
             if ($libroReservadoPorOtro) {

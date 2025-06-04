@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class UsuarioController extends Controller
 {
@@ -38,6 +39,11 @@ class UsuarioController extends Controller
     public function deleteUser(int $id): JsonResponse
     {
         try {
+            $loggedInUser = Auth::user();
+            if ($loggedInUser && $loggedInUser->id === $id) {
+                return response()->json(['message' => 'No puedes eliminar tu propio usuario.'], 403);
+            }
+
             $usuario = Usuario::findOrFail($id);
             $usuario->delete();
             return response()->json(['message' => 'Usuario borrado exitosamente'], 200);
@@ -84,21 +90,32 @@ class UsuarioController extends Controller
     public function editUser(Request $request, int $id): JsonResponse
     {
         try {
-            $usuario = Usuario::findOrFail($id);
+            $usuarioAEditar = Usuario::findOrFail($id);
+            $loggedInUser = Auth::user();
 
-            $validator = Validator::make($request->all(), [
+            $rules = [
                 'nombre' => 'required|string|max:255',
                 'apellido' => 'required|string|max:255',
                 'direccion' => 'required|string|max:255',
                 'correo' => 'required|string|email|max:255|unique:usuarios,correo,' . $id,
-                'rol' => 'required|string|in:usuario,admin',
-            ]);
+            ];
 
+            if ($usuarioAEditar->id === $loggedInUser->id) {
+                if ($request->has('rol') && $request->rol !== $usuarioAEditar->rol) {
+                    return response()->json(['message' => 'No puedes cambiar tu propio rol.'], 403);
+                }
+                $dataToUpdate = $request->except('rol');
+            } else {
+                $rules['rol'] = 'required|string|in:usuario,admin';
+                $dataToUpdate = $request->all();
+            }
+
+            $validator = Validator::make($dataToUpdate, $rules);
             if ($validator->fails()) {
                 return response()->json(['errors' => $validator->errors()], 422);
             }
 
-            $usuario->update($request->all());
+            $usuarioAEditar->update($dataToUpdate);
 
             return response()->json(['message' => 'Usuario actualizado exitosamente'], 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {

@@ -23,6 +23,7 @@ import CrearUsuario from './components/AdminPanel/Usuarios/Crearusuario.jsx';
 import EditarUsuario from './components/AdminPanel/Usuarios/EditarUsuario.jsx';
 import Carrito from './components/Carrito/Carrito.jsx';
 import Pedidos from './components/Pedidos/Pedidos.jsx';
+import Checkout from './components/Carrito/Checkout.jsx';
 
 
 const router = createBrowserRouter([
@@ -96,6 +97,10 @@ const router = createBrowserRouter([
       {
         path: '/pedidos',
         element: <Pedidos></Pedidos>
+      },
+      {
+        path: '/checkout',
+        element: <Checkout></Checkout>
       },
       {
         path: '*',

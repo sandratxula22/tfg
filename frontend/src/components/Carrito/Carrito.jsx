@@ -153,6 +153,14 @@ function Carrito() {
                     });
                     fetchCarrito();
                     return;
+                } else if (response.status === 404 && errorData.message.includes('Item de carrito no encontrado')) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: 'El libro ya no se encuentra en tu carrito. Recargando...',
+                    });
+                    fetchCarrito();
+                    return;
                 }
                 throw new Error(errorData.message || 'Error al renovar la reserva');
             }
@@ -177,33 +185,32 @@ function Carrito() {
     };
 
     const getReservationStatus = (item) => {
-        const { reservado_hasta, id, libro } = item;
+        if (item.status_message) {
+            const isExpiredForCurrentUser = item.reservation_expired_for_current_user;
+            const canBePurchased = item.can_be_purchased;
+            const isAvailableOverall = item.libro?.disponible;
 
-        if (!libro.disponible) {
-            return <span className="text-danger">Este libro no está disponible.</span>;
-        }
-
-        if (reservado_hasta) {
-            const reservationEndTimeUTC = moment.utc(reservado_hasta);
-            const nowUTC = moment.utc();
-            const timeLeft = moment.duration(reservationEndTimeUTC.diff(nowUTC));
-
-            if (timeLeft.asMinutes() > 0) {
-                const minutes = Math.ceil(timeLeft.asMinutes());
-                return `Reservado por ${minutes} minutos`;
-            } else {
+            if (!canBePurchased) {
+                return <span className="text-danger">{item.status_message}</span>;
+            } else if (isExpiredForCurrentUser) {
                 return (
                     <div>
-                        <span className="text-danger">Reserva expirada</span>
+                        <span className="text-danger">{item.status_message}</span>
                         <button
                             className="btn btn-sm btn-outline-secondary ms-2"
-                            onClick={() => handleRenewReservation(id)}
-                            disabled={!libro.disponible}
+                            onClick={() => handleRenewReservation(item.id)}
+                            disabled={!isAvailableOverall}
                         >
                             Renovar
                         </button>
                     </div>
                 );
+            } else if (item.reservado_hasta) {
+                const reservationEndTimeUTC = moment.utc(item.reservado_hasta);
+                const nowUTC = moment.utc();
+                const timeLeft = moment.duration(reservationEndTimeUTC.diff(nowUTC));
+                const minutes = Math.ceil(timeLeft.asMinutes());
+                return `Reservado por ${minutes} minutos`;
             }
         }
         return null;
@@ -216,49 +223,23 @@ function Carrito() {
             return;
         }
 
-        try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/paypal/checkout/start`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${currentAuthToken}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error al iniciar el pago con PayPal',
-                    text: errorData.message || 'Hubo un problema al iniciar el proceso de pago con PayPal.',
-                });
-                fetchCarrito();
-                return;
-            }
-
-            const data = await response.json();
-            if (data.approval_url) {
-                window.location.href = data.approval_url;
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se recibió la URL de aprobación de PayPal.',
-                });
-            }
-
-        } catch (error) {
+        const itemsNotPurchasable = carritoItems.filter(item => !item.can_be_purchased);
+        if (itemsNotPurchasable.length > 0) {
             Swal.fire({
                 icon: 'error',
-                title: '¡Error!',
-                text: `Error de conexión: ${error.message}`,
+                title: 'Libros no comprables',
+                text: 'Algunos libros de tu carrito ya no están disponibles o han sido reservados por otra persona. Por favor, revisa tu carrito.',
+            }).then(() => {
+                fetchCarrito();
             });
+            return;
         }
+
+        navigate('/checkout');
     };
 
-    const isCheckoutDisabled = carritoItems.length === 0 || carritoItems.some(item =>
-        !item.libro.disponible || (item.reservado_hasta && moment.utc(item.reservado_hasta).isSameOrBefore(moment.utc()))
-    );
+    const isCheckoutDisabled = carritoItems.length === 0 ||
+        carritoItems.some(item => !item.can_be_purchased);
 
     return (
         <div className="container py-5">
@@ -280,7 +261,7 @@ function Carrito() {
                     </div>
                 ) : (
                     carritoItems.map(item => (
-                        <li key={item.id} className="list-group-item d-flex justify-content-between align-items-center">
+                        <li key={item.id} className={`list-group-item d-flex justify-content-between align-items-center ${!item.can_be_purchased ? 'list-group-item-danger' : ''}`}>
                             <div>
                                 <h6 className="my-0">{item.libro.titulo}</h6>
                                 <small className="text-muted">{item.libro.autor}</small>
@@ -302,18 +283,18 @@ function Carrito() {
                 )}
             </ul>
             {carritoItems.length > 0 && (
-                <div className="mt-4">
-                    <strong>Total: {carritoItems.reduce((total, item) => total + parseFloat(item.precio), 0).toFixed(2)}€</strong>
+                <div className="mt-4 text-end">
+                    <strong>Total: {carritoItems.reduce((total, item) => total + (item.can_be_purchased ? parseFloat(item.precio) : 0), 0).toFixed(2)}€</strong>
                 </div>
             )}
             {carritoItems.length > 0 && (
-                <div className="mt-3">
+                <div className="mt-3 text-end">
                     <button
-                        className="btn btn-success me-2"
+                        className="btn btn-success"
                         onClick={handleCheckout}
                         disabled={isCheckoutDisabled}
                     >
-                        Pagar con PayPal
+                        Proceder al pago
                     </button>
                 </div>
             )}

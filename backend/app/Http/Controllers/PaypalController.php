@@ -15,6 +15,9 @@ use App\Models\Pedido_detalle;
 use App\Models\Libro;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\PedidoConfirmacion;
+use App\Models\Usuario;
 
 class PaypalController extends Controller
 {
@@ -32,6 +35,16 @@ class PaypalController extends Controller
         if (!$userId) {
             return response()->json(['message' => 'Usuario no autenticado'], 401);
         }
+
+        $shippingAddressData = $request->validate([
+            'nombre' => 'required|string|max:255',
+            'apellidos' => 'required|string|max:255',
+            'direccion' => 'required|string|max:255',
+            'ciudad' => 'required|string|max:255',
+            'codigo_postal' => 'required|string|max:10',
+            'pais' => 'required|string|max:2',
+        ]);
+
 
         $carrito = Carrito::where('id_usuario', $userId)
             ->where('estado', 'activo')
@@ -56,11 +69,18 @@ class PaypalController extends Controller
 
         DB::beginTransaction();
         try {
+            // 2. Guardar los datos de envío en el pedido pendiente
             $pendingOrder = Pedido::create([
                 'id_usuario' => $userId,
                 'total' => $total,
                 'fecha_pedido' => now(),
                 'estado' => 'pendiente_paypal',
+                'nombre_envio' => $shippingAddressData['nombre'],
+                'apellidos_envio' => $shippingAddressData['apellidos'],
+                'direccion_envio' => $shippingAddressData['direccion'],
+                'ciudad_envio' => $shippingAddressData['ciudad'],
+                'codigo_postal_envio' => $shippingAddressData['codigo_postal'],
+                'pais_envio' => $shippingAddressData['pais'],
             ]);
 
             $requestPayPal = new OrdersCreateRequest();
@@ -78,14 +98,35 @@ class PaypalController extends Controller
                                     'currency_code' => 'EUR',
                                     'value' => number_format($total, 2, '.', ''),
                                 ],
+                                // Puedes añadir shipping aquí si tienes un coste de envío fijo
+                                // 'shipping' => [
+                                //     'currency_code' => 'EUR',
+                                //     'value' => '0.00', // O el coste de envío calculado
+                                // ]
                             ],
                         ],
                         'items' => $items,
+                        // 3. Añadir la información de envío a la solicitud de PayPal
+                        'shipping' => [
+                            'name' => [
+                                'full_name' => $shippingAddressData['nombre'] . ' ' . $shippingAddressData['apellidos']
+                            ],
+                            'address' => [
+                                'address_line_1' => $shippingAddressData['direccion'],
+                                // Si tienes una segunda línea de dirección, puedes añadirla aquí
+                                // 'address_line_2' => '',
+                                'admin_area_2' => $shippingAddressData['ciudad'], // Ciudad
+                                'postal_code' => $shippingAddressData['codigo_postal'],
+                                'country_code' => $shippingAddressData['pais'], // Código de país ISO 3166-1 alpha-2
+                            ]
+                        ]
                     ],
                 ],
                 'application_context' => [
                     'return_url' => route('paypal.capture'),
                     'cancel_url' => route('paypal.cancel'),
+                    // 4. Configurar la preferencia de envío para que use la dirección proporcionada
+                    'shipping_preference' => 'SET_PROVIDED_ADDRESS',
                 ],
             ];
 
@@ -135,13 +176,10 @@ class PaypalController extends Controller
                     return redirect(env('VITE_FRONTEND_URL') . '/carrito?payment=error&message=' . urlencode($processResult->getData()->message));
                 }
 
-                // Obtener el ID del pedido para pasarlo a la URL
                 $pedido = Pedido::where('payment_id', $orderId)->first();
                 $pedidoId = $pedido ? $pedido->id : null;
 
-                // --- CAMBIO CLAVE AQUÍ: Redirigir a /pedidos con el ID del pedido ---
                 return redirect(env('VITE_FRONTEND_URL') . '/pedidos?payment=success&pedido_id=' . $pedidoId);
-
             } else {
                 Log::error('Error al capturar el pago PayPal: ' . $response->statusCode . ' - ' . json_encode($response->result));
                 return redirect(env('VITE_FRONTEND_URL') . '/carrito?payment=error&message=Error al capturar el pago de PayPal');
@@ -156,7 +194,9 @@ class PaypalController extends Controller
     {
         $paypalOrderId = $paymentResult->id;
         try {
-            $pedido = Pedido::where('payment_id', $paypalOrderId)->firstOrFail();
+            $pedido = Pedido::where('payment_id', $paypalOrderId)
+                ->with('detalles.libro', 'usuario')
+                ->firstOrFail();
             $userId = $pedido->id_usuario;
 
             DB::beginTransaction();
@@ -203,10 +243,18 @@ class PaypalController extends Controller
             $carrito->save();
 
             DB::commit();
+
+            if ($pedido->usuario && $pedido->usuario->correo) {
+                Mail::to($pedido->usuario->correo)->send(new PedidoConfirmacion($pedido));
+                Log::info('correo de confirmación de pedido enviado para el pedido ID: ' . $pedido->id . ' al correo: ' . $pedido->usuario->correo);
+            } else {
+                Log::warning('No se pudo enviar el correo de confirmación para el pedido ID: ' . $pedido->id . ' - Usuario o correo no encontrado.');
+            }
+
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Error al procesar el pedido después del pago: ' . $e->getMessage(), ['exception' => $e]);
+            Log::error('Error en processOrderAfterPayment: ' . $e->getMessage(), ['exception' => $e]);
             return response()->json(['message' => 'Error al procesar el pedido: ' . $e->getMessage()], 500);
         }
     }
