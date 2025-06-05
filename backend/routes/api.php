@@ -9,6 +9,7 @@ use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\PaypalController;
 use App\Http\Controllers\PedidoController;
 use App\Http\Controllers\BotController;
+use App\Http\Controllers\PeticionController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -30,6 +31,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/paypal/checkout/start', [PaypalController::class, 'startPayPalCheckout']);
 
     Route::get('/pedidos', [PedidoController::class, 'showOrders']);
+
+    Route::get('/usuario', [UsuarioController::class, 'show']);
+    Route::put('/usuario', [UsuarioController::class, 'update']);
+    Route::put('/usuario/password', [UsuarioController::class, 'changePassword']);
 });
 
 Route::middleware(['auth:sanctum', 'rol:admin'])->group(function () {
@@ -53,3 +58,5 @@ Route::get('/api/paypal/capture', [PaypalController::class, 'capturePayPalPaymen
 Route::get('/api/paypal/cancel', [PaypalController::class, 'paymentCancel'])->name('paypal.cancel');
 
 Route::post('/bot-recomienda', [BotController::class, 'recommendBook']);
+
+Route::post('/peticiones/enviar', [PeticionController::class, 'enviarPeticion']);

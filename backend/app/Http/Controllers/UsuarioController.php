@@ -9,9 +9,89 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\ValidationException;
 
 class UsuarioController extends Controller
 {
+    public function show(Request $request): JsonResponse
+    {
+        /** @var \App\Models\Usuario $user */
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Usuario no autenticado'], 401);
+        }
+
+        return response()->json([
+            'id' => $user->id,
+            'nombre' => $user->nombre,
+            'apellido' => $user->apellido,
+            'direccion' => $user->direccion,
+            'correo' => $user->correo,
+            'rol' => $user->rol,
+            'created_at' => $user->created_at,
+            'updated_at' => $user->updated_at,
+        ]);
+    }
+
+    public function update(Request $request): JsonResponse
+    {
+        /** @var \App\Models\Usuario $user */
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Usuario no autenticado'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'nombre' => 'required|string|max:255',
+            'apellido' => 'required|string|max:255',
+            'direccion' => 'required|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $user->nombre = $request->nombre;
+        $user->apellido = $request->apellido;
+        $user->direccion = $request->direccion;
+
+        $user->save();
+
+        return response()->json(['message' => 'Información actualizada exitosamente.', 'user' => $user]);
+    }
+
+    public function changePassword(Request $request): JsonResponse
+    {
+        /** @var \App\Models\Usuario $user */
+        $user = Auth::user();
+
+        if (!$user) {
+            return response()->json(['message' => 'Usuario no autenticado'], 401);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'current_password' => 'required|string',
+            'new_password' => 'required|string|min:8|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        if (!Hash::check($request->current_password, $user->contrasena)) {
+            throw ValidationException::withMessages([
+                'current_password' => ['La contraseña actual es incorrecta.'],
+            ]);
+        }
+
+        $user->contrasena = Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json(['message' => 'Contraseña actualizada exitosamente.']);
+    }
+
     public function getUsers(): JsonResponse
     {
         try {

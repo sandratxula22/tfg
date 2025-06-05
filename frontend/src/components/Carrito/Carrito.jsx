@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import moment from 'moment';
+import { Alert } from 'react-bootstrap';
 
 function Carrito() {
     const [carritoItems, setCarritoItems] = useState([]);
@@ -244,6 +245,17 @@ function Carrito() {
     return (
         <div className="container py-5">
             <h1 className="mb-4">Tu Carrito</h1>
+
+            <Alert variant="info" className="mb-4">
+                <Alert.Heading>¡Importante sobre las reservas!</Alert.Heading>
+                <p>
+                    Para asegurar la exclusividad de nuestros libros únicos, los artículos en tu carrito se <strong>reservan temporalmente por 15 minutos</strong> una vez que los añades o renuevas su reserva. Si el tiempo de reserva expira y no has completado la compra, el libro volverá a estar disponible para otros usuarios.
+                </p>
+                <p className="mb-0">
+                    Puedes renovar una reserva que ya haya expirado si el libro aún está disponible.
+                </p>
+            </Alert>
+
             <ul className="list-group">
                 {loading ? (
                     <div className="d-flex justify-content-center">

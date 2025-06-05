@@ -1,4 +1,3 @@
-import React from 'react';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
@@ -24,6 +23,8 @@ import EditarUsuario from './components/AdminPanel/Usuarios/EditarUsuario.jsx';
 import Carrito from './components/Carrito/Carrito.jsx';
 import Pedidos from './components/Pedidos/Pedidos.jsx';
 import Checkout from './components/Carrito/Checkout.jsx';
+import MiCuenta from './components/MiCuenta/MiCuenta.jsx';
+import Peticiones from './components/Peticiones/Peticiones.jsx';
 
 
 const router = createBrowserRouter([
@@ -101,6 +102,14 @@ const router = createBrowserRouter([
       {
         path: '/checkout',
         element: <Checkout></Checkout>
+      },
+      {
+        path: '/mi-cuenta',
+        element: <MiCuenta></MiCuenta>
+      },
+      {
+        path: '/peticiones',
+        element: <Peticiones></Peticiones>
       },
       {
         path: '*',

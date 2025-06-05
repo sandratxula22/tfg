@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confirmación de Pedido</title>
     <style>
+        /* Los estilos se cargan aquí dado que los clientes de correo no cargan archivos CSS externos*/
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
         .container { width: 80%; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px; background-color: #f9f9f9; }
         .header { background-color: #4CAF50; color: white; padding: 10px 0; text-align: center; border-radius: 5px 5px 0 0; }
@@ -14,6 +15,8 @@
         th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
         th { background-color: #f2f2f2; }
         .total { text-align: right; font-weight: bold; margin-top: 10px; }
+        .shipping-address { margin-top: 20px; padding: 15px; border: 1px solid #eee; background-color: #fff; border-radius: 5px; }
+        .shipping-address p { margin: 5px 0; }
     </style>
 </head>
 <body>
@@ -47,9 +50,16 @@
             <div class="total">
                 <p><strong>Total pagado: {{ number_format($pedido->total, 2) }}€</strong></p>
             </div>
+            <h3>Dirección de Envío:</h3>
+            <div class="shipping-address">
+                <p><strong>{{ $pedido->nombre_envio }} {{ $pedido->apellidos_envio }}</strong></p>
+                <p>{{ $pedido->direccion_envio }}</p>
+                <p>{{ $pedido->ciudad_envio }}, {{ $pedido->codigo_postal_envio }}</p>
+                <p>{{ $pedido->pais_envio }}</p>
+            </div>
             <p>Recibirás otra notificación una vez que tu pedido sea enviado.</p>
             <p>Si tienes alguna pregunta, no dudes en contactarnos.</p>
-            <p>Atentamente,<br>El equipo de La  Página Doblada</p>
+            <p>Atentamente,<br>El equipo de La Página Doblada</p>
         </div>
         <div class="footer">
             <p>&copy; {{ date('Y') }} La Página Doblada. Todos los derechos reservados.</p>

@@ -1,0 +1,52 @@
+.vertical-divider {
+    border-left: 1px solid #dee2e6;
+    height: 100%;
+}
+
+.d-flex.flex-column .card {
+    height: 100%;
+}
+
+.card{
+    width: 100%;
+}
+
+.email-readonly-custom {
+    background-color: #e9ecef;
+    color: #6c757d;
+    cursor: not-allowed; 
+    opacity: 1;
+}
+
+.email-readonly-custom:focus {
+    background-color: #e9ecef;
+    color: #6c757d;
+    box-shadow: none;
+    border-color: #ced4da;
+}
+
+.mi-cuenta-row .col:first-child::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    height: 100%;
+    width: 1px;
+    background-color: #dee2e6;
+    transform: translateX(50%);
+    z-index: 1;
+}
+
+.mi-cuenta-row {
+    max-width: 1200px;
+}
+
+.d-flex.flex-column .card {
+    height: 100%;
+}
+
+@media (max-width: 767.98px) {
+    .mi-cuenta-row .col:first-child::after {
+        display: none;
+    }
+}

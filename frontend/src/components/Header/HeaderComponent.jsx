@@ -30,6 +30,7 @@ function HeaderComponent() {
                         {userRole === 'admin' && (
                             <Nav.Link as={Link} to="/admin" className="nav-link-custom">Panel de Admin</Nav.Link>
                         )}
+                        <Nav.Link as={Link} to="/peticiones" className="nav-link-custom">Peticiones</Nav.Link>
                         {isAuthenticated && (
                             <>
                                 <Nav.Link as={Link} to="/carrito" className="nav-icon-link">
@@ -39,6 +40,10 @@ function HeaderComponent() {
                                 <Nav.Link as={Link} to="/pedidos" className="nav-icon-link">
                                     <span className="material-symbols-outlined nav-icon">receipt_long</span>
                                     <span className="nav-text-mobile">Mis Pedidos</span>
+                                </Nav.Link>
+                                <Nav.Link as={Link} to="/mi-cuenta" className="nav-icon-link">
+                                    <span className="material-symbols-outlined nav-icon">person</span>
+                                    <span className="nav-text-mobile">Mi Cuenta</span>
                                 </Nav.Link>
                             </>
                         )}
