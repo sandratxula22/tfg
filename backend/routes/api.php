@@ -8,6 +8,7 @@ use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\CarritoController;
 use App\Http\Controllers\PaypalController;
 use App\Http\Controllers\PedidoController;
+use App\Http\Controllers\BotController;
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return $request->user();
@@ -17,13 +18,8 @@ Route::post('/register', [AuthController::class, 'register'])->name('register');
 Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
 Route::get('/libros', [LibroController::class, 'showBooks']);
 Route::get('/libros/{id}', [LibroController::class, 'showBookById']);
-
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/carrito', [CarritoController::class, 'showCart']);
@@ -55,3 +51,5 @@ Route::middleware(['auth:sanctum', 'rol:admin'])->group(function () {
 
 Route::get('/api/paypal/capture', [PaypalController::class, 'capturePayPalPayment'])->name('paypal.capture');
 Route::get('/api/paypal/cancel', [PaypalController::class, 'paymentCancel'])->name('paypal.cancel');
+
+Route::post('/bot-recomienda', [BotController::class, 'recommendBook']);
