@@ -1,41 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
-import './LibroDetalles.css'; // Asegúrate de tener esta importación
+import { Container, Row, Col, Button, Carousel, Spinner, Alert } from 'react-bootstrap';
+import './LibroDetalles.css';
 
 function LibroDetallesComponent() {
     const { id } = useParams();
     const [libro, setLibro] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const [currentImageIndex, setCurrentImageIndex] = useState(0);
     const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchLibro = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const apiUrl = `${VITE_API_BASE_URL}/api/libros/${id}`;
-                const response = await fetch(apiUrl);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+    const fetchLibro = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const apiUrl = `${VITE_API_BASE_URL}/api/libros/${id}`;
+            const response = await fetch(apiUrl);
+            if (!response.ok) {
+                if (response.status === 404) {
+                    throw new Error('Libro no encontrado.');
                 }
-                const data = await response.json();
-                setLibro(data);
-            } catch (err) {
-                setError(err);
-            } finally {
-                setLoading(false);
+                throw new Error(`Error HTTP: ${response.status}`);
             }
-        };
+            const data = await response.json();
+            setLibro(data);
+        } catch (err) {
+            setError(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
+    useEffect(() => {
         fetchLibro();
-    }, [id]);
+    }, [id, VITE_API_BASE_URL]);
 
     const handleAddToCart = (libroId, precio) => {
-        // ... (la misma función handleAddToCart que antes) ...
         const carritoApiUrl = `${VITE_API_BASE_URL}/api/carrito/add`;
         const authToken = localStorage.getItem('authToken');
 
@@ -85,6 +87,14 @@ function LibroDetallesComponent() {
                         showConfirmButton: false,
                         timer: 1500
                     });
+                } else if (data.message.includes('reservado por otra persona')) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Lo sentimos',
+                        text: data.message,
+                        showConfirmButton: false,
+                        timer: 2000
+                    });
                 } else {
                     Swal.fire({
                         icon: 'success',
@@ -106,15 +116,31 @@ function LibroDetallesComponent() {
     };
 
     if (loading) {
-        return <div className="text-center py-4">Cargando detalles del libro...</div>;
+        return (
+            <Container className="py-5 text-center">
+                <Spinner animation="border" role="status">
+                    <span className="visually-hidden">Cargando detalles del libro...</span>
+                </Spinner>
+            </Container>
+        );
     }
 
     if (error) {
-        return <div className="text-red-500 py-4">Error al cargar los detalles: {error.message}</div>;
+        return (
+            <Container className="py-5">
+                <Alert variant="danger">Error al cargar los detalles: {error.message}</Alert>
+                <Link to="/" className="btn btn-primary mt-3">Volver a la lista de libros</Link>
+            </Container>
+        );
     }
 
     if (!libro) {
-        return <div className="text-gray-500 py-4">Libro no encontrado.</div>;
+        return (
+            <Container className="py-5 text-center">
+                <Alert variant="info">Libro no encontrado.</Alert>
+                <Link to="/" className="btn btn-primary mt-3">Volver a la lista de libros</Link>
+            </Container>
+        );
     }
 
     const allImages = [
@@ -122,62 +148,64 @@ function LibroDetallesComponent() {
         ...(libro.imagenes_adicionales || []).map(img => img.url)
     ].filter(Boolean);
 
-    const goToPrevious = () => {
-        setCurrentImageIndex((prevIndex) => (prevIndex - 1 + allImages.length) % allImages.length);
-    };
-
-    const goToNext = () => {
-        setCurrentImageIndex((prevIndex) => (prevIndex + 1) % allImages.length);
-    };
-
     return (
-        <div className="container mx-auto py-8">
-            {allImages.length > 0 && (
-                <div className="relative mb-8">
-                    <img
-                        src={`${VITE_API_BASE_URL}/${allImages[currentImageIndex]}`}
-                        alt={`${libro.titulo} - Imagen ${currentImageIndex + 1}`}
-                        className="w-full rounded-lg shadow-md carousel-image"
-                    />
-                    {allImages.length > 1 && (
-                        <>
-                            <button
-                                className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-gray-300 bg-opacity-50 text-gray-800 p-2 rounded-full hover:bg-gray-400"
-                                onClick={goToPrevious}
-                            >
-                                &lt;
-                            </button>
-                            <button
-                                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-300 bg-opacity-50 text-gray-800 p-2 rounded-full hover:bg-gray-400"
-                                onClick={goToNext}
-                            >
-                                &gt;
-                            </button>
-                        </>
+        <Container className="py-5">
+            <Row>
+                <Col md={6}>
+                    {allImages.length > 1 ? (
+                        <Carousel data-bs-theme="dark" className="book-carousel">
+                            {allImages.map((image, index) => (
+                                <Carousel.Item key={index}>
+                                    <img
+                                        className="d-block w-100 book-detail-image"
+                                        src={`${VITE_API_BASE_URL}/${image}`}
+                                        alt={`Imagen ${index + 1} de ${libro.titulo}`}
+                                    />
+                                </Carousel.Item>
+                            ))}
+                        </Carousel>
+                    ) : (
+                        <img
+                            className="d-block w-100 book-detail-image"
+                            src={`${VITE_API_BASE_URL}/${allImages[0]}`}
+                            alt={`Portada de ${libro.titulo}`}
+                        />
                     )}
-                </div>
-            )}
+                </Col>
 
-            <div className="mb-6">
-                <h1 className="text-3xl font-bold mb-2">{libro.titulo}</h1>
-                <p className="text-gray-700 mb-1">Autor: {libro.autor}</p>
-                <p className="text-gray-800">{libro.descripcion}</p>
-            </div>
+                <Col md={6} className="ps-md-4">
+                    <h1 className="mb-2">{libro.titulo}</h1>
+                    <p className="text-muted lead">{libro.autor}</p>
+                    <hr />
+                    <p className="mb-4">{libro.descripcion}</p>
 
-            {/*
-            <div className="flex items-center justify-between mb-4">
-                <p className="text-xl font-semibold">{libro.precio}€</p>
-                <button
-                    className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
-                    onClick={() => handleAddToCart(libro.id, libro.precio)}
-                >
-                    Añadir al carrito
-                </button>
-            </div>
-            */}
+                    <div className="d-flex align-items-center justify-content-between mb-4">
+                        <p className="h3 text-danger fw-bold">{libro.precio}€</p>
+                        <div>
+                            {libro.disponible ? (
+                                libro.esta_reservado ? (
+                                    <span className="badge bg-warning text-dark me-2">Reservado</span>
+                                ) : (
+                                    <span className="badge bg-success me-2">Disponible</span>
+                                )
+                            ) : (
+                                <span className="badge bg-danger me-2">No Disponible</span>
+                            )}
 
-            <Link to="/" className="inline-block mt-4 text-blue-500 hover:underline">Volver a la lista</Link>
-        </div>
+                            <Button
+                                variant="primary"
+                                onClick={() => handleAddToCart(libro.id, libro.precio)}
+                                disabled={!libro.disponible || libro.esta_reservado}
+                            >
+                                {libro.esta_reservado ? 'Reservado' : 'Añadir al carrito'}
+                            </Button>
+                        </div>
+                    </div>
+
+                    <Link to="/" className="btn btn-outline-secondary mt-3">Volver a la lista</Link>
+                </Col>
+            </Row>
+        </Container>
     );
 }
 

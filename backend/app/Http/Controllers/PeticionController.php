@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
-use App\Mail\PeticionLibroMail; // ACTUALIZADO: Importa la nueva Mailable
+use App\Mail\PeticionLibroMail;
 
 class PeticionController extends Controller
 {

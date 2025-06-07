@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Table from 'react-bootstrap/Table';
 import Button from 'react-bootstrap/Button';
 import Swal from 'sweetalert2';
+import axios from 'axios';
 import '../AdminPanel.css';
 
 function AdminLibros() {
@@ -50,15 +51,15 @@ function AdminLibros() {
             setMensaje(editSuccessMessage);
             localStorage.removeItem('libroEditSuccess');
         }
-    }, [VITE_API_BASE_URL, fetchLibros]);
+    }, [fetchLibros]);
 
     const handleEditar = (id) => {
         navigate(`/libros/edit/${id}`);
     };
 
-    const handleBorrar = async (id) => {
+    const handleBorrar = async (id, titulo) => {
         const result = await Swal.fire({
-            title: `¿Estás seguro de que quieres borrar el libro con ID ${id}?`,
+            title: `¿Estás seguro de que quieres borrar el libro "${titulo}"?`,
             text: "¡Esta acción no se puede deshacer!",
             icon: 'warning',
             showCancelButton: true,
@@ -70,44 +71,50 @@ function AdminLibros() {
         if (result.isConfirmed) {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await fetch(`${VITE_API_BASE_URL}/api/admin/libros/delete/${id}`, {
-                    method: 'DELETE',
+                const response = await axios.delete(`${VITE_API_BASE_URL}/api/admin/libros/delete/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
                 });
 
-                if (response.ok) {
+                if (response.status === 200) {
                     setLibros(libros.filter(libro => libro.id !== id));
                     Swal.fire(
                         '¡Borrado!',
                         'El libro ha sido borrado con éxito.',
                         'success'
                     );
-                } else {
-                    const errorData = await response.json();
-                    console.error("Error al borrar el libro:", errorData);
-                    Swal.fire(
-                        'Error',
-                        errorData.message || 'Error al borrar el libro.',
-                        'error'
-                    );
                 }
             } catch (error) {
-                if (error.response && error.response.data) {
-                    Swal.fire(
-                        'Error',
-                        error.response.data.message || 'Error al borrar el libro.',
-                        'error'
-                    );
+                let errorMessage = 'Error al borrar el libro.';
+                let errorTitle = '¡Oops!';
+                let errorIcon = 'error';
+
+                if (error.response) {
+                    if (error.response.status === 409) {
+                        errorMessage = error.response.data.message || 'Conflicto al intentar borrar el libro.';
+                        errorTitle = '¡No se puede borrar!';
+                        errorIcon = 'warning';
+                    }
+                    else if (error.response.status === 403) {
+                        errorMessage = error.response.data.message || 'No tienes permiso para realizar esta acción.';
+                        errorTitle = 'Permiso denegado';
+                    }
+                    else {
+                        errorMessage = error.response.data.message || 'Error en la respuesta de la API.';
+                        errorTitle = 'Error de API';
+                    }
                 } else {
-                    Swal.fire(
-                        'Error',
-                        'Error al conectar con la API o permiso denegado.',
-                        'error'
-                    );
+                    errorMessage = 'Error de conexión con el servidor.';
+                    errorTitle = 'Error de Red';
                 }
-                console.error("Error al conectar con la API:", error);
+
+                Swal.fire({
+                    icon: errorIcon,
+                    title: errorTitle,
+                    text: errorMessage,
+                });
+                console.error("Error completo al borrar el libro:", error);
             }
         }
     };
@@ -162,7 +169,7 @@ function AdminLibros() {
                                     <Button className="btn btn-primary btn-sm me-2" onClick={() => handleEditar(libro.id)}>Editar</Button>
                                 </td>
                                 <td>
-                                    <Button className="btn btn-danger btn-sm" onClick={() => handleBorrar(libro.id)}>Borrar</Button>
+                                    <Button className="btn btn-danger btn-sm" onClick={() => handleBorrar(libro.id, libro.titulo)}>Borrar</Button>
                                 </td>
                             </tr>
                         ))

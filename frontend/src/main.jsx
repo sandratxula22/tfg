@@ -34,11 +34,11 @@ const router = createBrowserRouter([
     children: [
       {
         path: '/',
-        element: <Home></Home>,
+        element: <Home></Home>
       },
       {
         path: '/libro/:id',
-        element: <LibroDetalles></LibroDetalles>,
+        element: <LibroDetalles></LibroDetalles>
       },
       {
         path: '/libros/edit/:id',
@@ -69,13 +69,17 @@ const router = createBrowserRouter([
         element: <AdminPanel></AdminPanel>,
         children: [
           {
+            index: true,
+            element: <AdminLibros></AdminLibros>
+          },
+          {
             path: '/admin/libros',
-            element: <AdminLibros></AdminLibros>,
+            element: <AdminLibros></AdminLibros>
 
           },
           {
             path: '/admin/imagenes',
-            element: <AdminImagenes></AdminImagenes>,
+            element: <AdminImagenes></AdminImagenes>
           },
           {
             path: '/admin/usuarios',

@@ -1,2 +1,29 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 @import "tailwindcss";
+
+:root {
+  --font-heading: 'Montserrat', sans-serif;
+  --font-body: 'EB Garamond', serif;
+}
+
+body {
+  font-family: var(--font-body);
+  line-height: 1.6;
+  color: #333;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+button, input, select, textarea, .navbar-nav, .nav-link {
+  font-family: var(--font-heading);
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}

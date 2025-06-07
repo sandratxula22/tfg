@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import moment from 'moment';
+import { Alert, Card, Spinner, ListGroup } from 'react-bootstrap'; // Importa Card y ListGroup
 
 function Pedidos() {
     const [pedidos, setPedidos] = useState([]);
@@ -64,6 +65,11 @@ function Pedidos() {
         const lastPedidoId = queryParams.get('pedido_id');
         const errorMessage = queryParams.get('message');
 
+        const cleanUrl = location.pathname;
+        if (paymentStatus || lastPedidoId || errorMessage) {
+            navigate(cleanUrl, { replace: true });
+        }
+
         if (paymentStatus === 'success') {
             Swal.fire({
                 icon: 'success',
@@ -90,9 +96,9 @@ function Pedidos() {
     if (loading) {
         return (
             <div className="container py-5 text-center">
-                <div className="spinner-border" role="status">
+                <Spinner animation="border" role="status">
                     <span className="visually-hidden">Cargando pedidos...</span>
-                </div>
+                </Spinner>
             </div>
         );
     }
@@ -100,9 +106,9 @@ function Pedidos() {
     if (error) {
         return (
             <div className="container py-5">
-                <div className="alert alert-danger" role="alert">
+                <Alert variant="danger" role="alert">
                     Error al cargar los pedidos: {error}
-                </div>
+                </Alert>
             </div>
         );
     }
@@ -111,57 +117,59 @@ function Pedidos() {
         <div className="container py-5">
             <h1 className="mb-4">Mis Pedidos</h1>
             {pedidos.length === 0 ? (
-                <div className="alert alert-info" role="alert">
+                <Alert variant="info" role="alert">
                     Aún no tienes pedidos realizados. ¡Anímate a explorar nuestros libros!
-                </div>
+                </Alert>
             ) : (
-                <ul className="list-group">
+                <div className="d-grid gap-4">
                     {pedidos.map(pedido => (
-                        <li key={pedido.id} className="list-group-item mb-3 shadow-sm">
-                            <div className="d-flex justify-content-between align-items-center">
+                        <Card key={pedido.id} className="shadow-sm">
+                            <Card.Header className="d-flex justify-content-between align-items-center bg-light">
                                 <h5>Pedido #{pedido.id}</h5>
                                 <span className={`badge ${pedido.estado === 'pagado' ? 'bg-success' : 'bg-warning text-dark'}`}>
                                     {pedido.estado.charAt(0).toUpperCase() + pedido.estado.slice(1)}
                                 </span>
-                            </div>
-                            <p className="text-muted mb-1">Fecha: {moment(pedido.created_at).format('DD/MM/YYYY HH:mm')}</p>
+                            </Card.Header>
+                            <Card.Body>
+                                <p className="text-muted mb-1">{moment(pedido.created_at).format('DD/MM/YYYY HH:mm')}</p>
 
-                            {pedido.nombre_envio && (
-                                <div className="mt-2 mb-2 p-2 bg-light rounded">
-                                    <strong>Envío a:</strong>
-                                    <p className="mb-0">
-                                        {pedido.nombre_envio} {pedido.apellidos_envio}
-                                    </p>
-                                    <p className="mb-0">
-                                        {pedido.direccion_envio}
-                                    </p>
-                                    <p className="mb-0">
-                                        {pedido.codigo_postal_envio} {pedido.ciudad_envio}, {pedido.pais_envio}
-                                    </p>
-                                </div>
-                            )}
-
-                            {pedido.detalles && pedido.detalles.length > 0 && (
-                                <div className="mt-2">
-                                    <h6>Items:</h6>
-                                    <ul className="list-group list-group-flush">
-                                        {pedido.detalles.map(detalle => (
-                                            <li key={detalle.id} className="list-group-item d-flex justify-content-between align-items-center py-1">
-                                                <span>{detalle.libro.titulo} - {detalle.libro.autor}</span>
-                                                <span>{parseFloat(detalle.precio).toFixed(2)}€</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                    <div className="d-flex justify-content-end mt-2">
-                                        <p className="fs-5 fw-bold text-success mb-0">
-                                            {parseFloat(pedido.total).toFixed(2)}€
+                                {pedido.nombre_envio && (
+                                    <div className="mt-3 mb-3 p-2 bg-light rounded">
+                                        <strong>Envío a:</strong>
+                                        <p className="mb-0">
+                                            {pedido.nombre_envio} {pedido.apellidos_envio}
+                                        </p>
+                                        <p className="mb-0">
+                                            {pedido.direccion_envio}
+                                        </p>
+                                        <p className="mb-0">
+                                            {pedido.codigo_postal_envio} {pedido.ciudad_envio}, {pedido.pais_envio}
                                         </p>
                                     </div>
-                                </div>
-                            )}
-                        </li>
+                                )}
+
+                                {pedido.detalles && pedido.detalles.length > 0 && (
+                                    <div className="mt-3 mb-3 p-2">
+                                        <h6><strong>Items:</strong></h6>
+                                        <ListGroup variant="flush">
+                                            {pedido.detalles.map(detalle => (
+                                                <ListGroup.Item key={detalle.id} className="d-flex justify-content-between align-items-center py-1">
+                                                    <span>{detalle.libro.titulo} - {detalle.libro.autor}</span>
+                                                    <span>{parseFloat(detalle.precio).toFixed(2)}€</span>
+                                                </ListGroup.Item>
+                                            ))}
+                                        </ListGroup>
+                                        <div className="d-flex justify-content-end mt-3">
+                                            <p className="fs-5 fw-bold text-primary mb-0">
+                                                {parseFloat(pedido.total).toFixed(2)}€
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                            </Card.Body>
+                        </Card>
                     ))}
-                </ul>
+                </div>
             )}
         </div>
     );

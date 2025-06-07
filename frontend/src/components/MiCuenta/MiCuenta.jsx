@@ -255,12 +255,11 @@ function MiCuenta() {
                     </div>
                 </Col>
 
-                {/* Reintroducimos la columna del divisor con un ancho visible */}
                 <Col md={1} className="d-none d-md-flex align-items-center justify-content-center">
                     <div className="vertical-divider"></div>
                 </Col>
 
-                <Col md={5} className="d-flex flex-column"> {/* md={5} */}
+                <Col md={5} className="d-flex flex-column">
                     <div className="card shadow-sm flex-grow-1">
                         <div className="card-header">
                             <h4>Cambiar Contraseña</h4>

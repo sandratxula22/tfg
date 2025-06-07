@@ -117,7 +117,7 @@ function EditarUsuario() {
                 Swal.fire({
                     icon: 'success',
                     title: '¡Actualizado!',
-                    text: 'Usuario actualizado exitosamente.',
+                    text: 'Usuario actualizado con éxito.',
                     showConfirmButton: false,
                     timer: 1500
                 }).then(() => {
@@ -229,7 +229,7 @@ function EditarUsuario() {
                 </Form.Group>
 
                 <Button variant="primary" type="submit">Guardar Cambios</Button>
-                <Button variant="secondary" onClick={() => navigate('/admin/usuarios')} className="ms-2">Volver</Button>
+                <Button variant="secondary" onClick={() => navigate('/admin/usuarios')} className="ms-3">Volver</Button>
             </Form>
         </div>
     );

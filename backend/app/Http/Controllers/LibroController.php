@@ -13,23 +13,68 @@ use Illuminate\Support\Str;
 
 class LibroController extends Controller
 {
-    public function showBooks(): JsonResponse
+    public function showBooks(Request $request): JsonResponse
     {
-        $libros = Libro::with('imagenesAdicionales')->get()->map(function ($libro) {
+        $query = Libro::query();
+
+        if ($request->has('nombre') && $request->nombre) {
+            $query->where('titulo', 'like', '%' . $request->nombre . '%');
+        }
+
+        if ($request->has('autor') && $request->autor) {
+            $query->where('autor', 'like', '%' . $request->autor . '%');
+        }
+
+        if ($request->has('genero') && $request->genero) {
+            $query->where('genero', $request->genero);
+        }
+
+        if ($request->has('precio_min') && $request->precio_min) {
+            $query->where('precio', '>=', $request->precio_min);
+        }
+
+        if ($request->has('precio_max') && $request->precio_max) {
+            $query->where('precio', '<=', $request->precio_max);
+        }
+
+        $libros = $query->with('imagenesAdicionales')->get();
+
+        $libros = $libros->map(function ($libro) {
             $estaReservado = $libro->estaReservado();
 
             return $libro->toArray() + [
                 'esta_reservado' => $estaReservado,
             ];
         });
+
         return response()->json($libros);
     }
 
+    public function getUniqueGeneros(): JsonResponse
+    {
+        try {
+            $generos = Libro::where('disponible', true)
+                ->distinct('genero')
+                ->pluck('genero')
+                ->filter()
+                ->sort()
+                ->values()
+                ->toArray();
+
+            return response()->json($generos);
+        } catch (\Exception $e) {
+            Log::error("Error al obtener géneros únicos: " . $e->getMessage());
+            return response()->json(['message' => 'Error al obtener los géneros'], 500);
+        }
+    }
 
     public function showBookById(int $id): JsonResponse
     {
         try {
             $libro = Libro::with('imagenesAdicionales')->findOrFail($id);
+
+            $libro->esta_reservado = $libro->estaReservado();
+
             return response()->json($libro);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'Libro no encontrado'], 404);
@@ -43,28 +88,45 @@ class LibroController extends Controller
     {
         try {
             $libro = Libro::findOrFail($id);
-            $libro->carritoDetalles()->delete();
-            $imagenesAdicionales = $libro->imagenesAdicionales;
 
+            if ($libro->pedidoDetalles()->exists()) {
+                return response()->json(['message' => 'Este libro no puede ser eliminado porque tiene historial de pedidos asociados.'], 409);
+            }
+
+            if ($libro->carritoDetalles()->exists()) {
+                return response()->json(['message' => 'Este libro no puede ser eliminado porque está en un carrito de compras.'], 409);
+            }
+
+            $imagenesAdicionales = $libro->imagenesAdicionales;
             foreach ($imagenesAdicionales as $imagen) {
                 $filename = $imagen->url;
-                $path = $filename;
+                $path = public_path($filename);
 
                 if (File::exists($path)) {
                     File::delete($path);
                 } else {
-                    Log::warning("Archivo de imagen no encontrado al eliminar libro ID {$id}: " . $path);
+                    Log::warning('Archivo de imagen adicional no encontrado al eliminar libro ID {$id}: ' . $path);
+                }
+            }
+
+            if ($libro->imagen_portada) {
+                $portadaPath = public_path($libro->imagen_portada);
+                if (File::exists($portadaPath)) {
+                    File::delete($portadaPath);
+                } else {
+                    Log::warning('Archivo de portada no encontrado al eliminar libro ID {$id}: ' . $portadaPath);
                 }
             }
 
             $libro->delete();
 
-            return response()->json(['message' => 'Libro y sus imágenes borradas exitosamente'], 200);
+            return response()->json(['message' => 'Libro borrado exitosamente.'], 200);
+
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'Libro no encontrado'], 404);
         } catch (\Exception $e) {
-            Log::error("Error al borrar el libro con ID {$id}: " . $e->getMessage());
-            return response()->json(['message' => 'Error al borrar el libro'], 500);
+            Log::error("Error al intentar borrar el libro con ID {$id}: " . $e->getMessage());
+            return response()->json(['message' => 'Error interno al intentar borrar el libro.'], 500);
         }
     }
 
@@ -217,7 +279,7 @@ class LibroController extends Controller
             return response()->json($image);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'Imagen no encontrada'], 404);
-        } catch (\Exception $e) {
+        } catch (\Exception | \Throwable $e) {
             Log::error("Error al obtener la imagen con ID {$id}: " . $e->getMessage());
             return response()->json(['message' => 'Error al obtener la imagen'], 500);
         }
@@ -289,7 +351,7 @@ class LibroController extends Controller
             return response()->json(['message' => 'Imagen actualizada exitosamente'], 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json(['message' => 'Imagen no encontrada'], 404);
-        } catch (\Exception $e) {
+        } catch (\Exception | \Throwable $e) {
             Log::error("Error al actualizar la imagen con ID {$id}: " . $e->getMessage());
             return response()->json(['message' => 'Error al actualizar la imagen'], 500);
         }

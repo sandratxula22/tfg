@@ -3,23 +3,54 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    max-height: 300px;
+    max-height: 250px;
+    overflow: hidden;
 }
 
 .book-cover-image {
     max-width: 100%;
     max-height: 100%;
     object-fit: contain;
+    display: block;
 }
 
-.card-img-top {
-    padding: 0;
-    margin: 0;
-    border-radius: 0;
+.book-card {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-.card{
-    max-width: 320px;
-    margin-left: auto;
-    margin-right: auto;
+.book-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+}
+
+.book-card .card-body {
+    padding: 1rem;
+}
+
+.book-card .card-title {
+    font-size: 1.25rem;
+    margin-bottom: 0.5rem;
+    height: 3rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.book-card .card-text.text-muted.small {
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    height: 1.5rem;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.book-card .card-text strong {
+    font-size: 1.5rem;
 }

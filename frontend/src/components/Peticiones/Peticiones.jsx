@@ -3,7 +3,7 @@ import Swal from 'sweetalert2';
 import FloatingBotButton from '../Bot/FloatingBotButton';
 import { Container, Form, Button, Alert } from 'react-bootstrap';
 import { useAuth } from '../../contexts/AuthContext';
-import './Peticiones.css'; // Asegúrate de que esta ruta sea correcta para tu archivo CSS
+import './Peticiones.css';
 
 function Peticiones() {
     const [formData, setFormData] = useState({
@@ -97,7 +97,7 @@ function Peticiones() {
                                         name="titulo"
                                         value={formData.titulo}
                                         onChange={handleChange}
-                                        placeholder="Ej: Cien años de soledad"
+                                        placeholder="Cien años de soledad"
                                         required
                                     />
                                 </Form.Group>
@@ -109,7 +109,7 @@ function Peticiones() {
                                         name="autor"
                                         value={formData.autor}
                                         onChange={handleChange}
-                                        placeholder="Ej: Gabriel García Márquez"
+                                        placeholder="Gabriel García Márquez"
                                         required
                                     />
                                 </Form.Group>
@@ -135,7 +135,6 @@ function Peticiones() {
                                         onChange={handleChange}
                                         placeholder="tu.correo@ejemplo.com"
                                         required
-                                        readOnly={isAuthenticated}
                                     />
                                 </Form.Group>
 

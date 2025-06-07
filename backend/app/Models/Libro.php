@@ -34,4 +34,9 @@ class Libro extends Model
     {
         return $this->hasMany(Carrito_detalle::class, 'id_libro');
     }
+
+    public function pedidoDetalles()
+    {
+        return $this->hasMany(Pedido_detalle::class, 'id_libro');
+    }
 }

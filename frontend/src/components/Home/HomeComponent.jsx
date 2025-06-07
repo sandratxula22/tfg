@@ -1,20 +1,55 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import './Home.css';
 import Swal from 'sweetalert2';
-import FloatingBotButton from '../Bot/FloatingBotButton'; 
+import FloatingBotButton from '../Bot/FloatingBotButton';
+import { Container, Row, Col, Spinner, Alert, Button, Form } from 'react-bootstrap';
+import './Home.css';
 
 function Home() {
     const [libros, setLibros] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [filters, setFilters] = useState({
+        nombre: '',
+        autor: '',
+        genero: '',
+        precio_min: '',
+        precio_max: ''
+    });
+    const [generos, setGeneros] = useState([]);
+    const [priceRangeError, setPriceRangeError] = useState('');
+
     const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-    const apiUrl = `${VITE_API_BASE_URL}/api/libros`;
     const navigate = useNavigate();
 
-    const fetchLibros = () => {
+    const fetchAllGeneros = useCallback(async () => {
+        try {
+            const response = await fetch(`${VITE_API_BASE_URL}/api/libros/generos`);
+            if (!response.ok) {
+                throw new Error('Error al cargar la lista completa de géneros.');
+            }
+            const data = await response.json();
+            setGeneros(data);
+        } catch (err) {
+            console.error("Error fetching all genres:", err);
+        }
+    }, [VITE_API_BASE_URL]);
+
+
+    const fetchLibros = useCallback((currentFilters) => {
         setLoading(true);
-        fetch(apiUrl)
+        setError(null);
+
+        const queryParams = new URLSearchParams();
+        if (currentFilters.nombre) queryParams.append('nombre', currentFilters.nombre);
+        if (currentFilters.autor) queryParams.append('autor', currentFilters.autor);
+        if (currentFilters.genero) queryParams.append('genero', currentFilters.genero);
+        if (currentFilters.precio_min) queryParams.append('precio_min', currentFilters.precio_min);
+        if (currentFilters.precio_max) queryParams.append('precio_max', currentFilters.precio_max);
+
+        const apiUrlWithFilters = `${VITE_API_BASE_URL}/api/libros?${queryParams.toString()}`;
+
+        fetch(apiUrlWithFilters)
             .then(response => {
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
@@ -30,19 +65,62 @@ function Home() {
                 setError(error);
                 setLoading(false);
             });
-    };
+    }, [VITE_API_BASE_URL]);
 
     useEffect(() => {
-        fetchLibros();
-    }, []);
+        fetchAllGeneros();
+        fetchLibros(filters);
+    }, [fetchAllGeneros, fetchLibros]);
 
-    if (loading) {
-        return <div className="text-center py-4">Cargando libros...</div>;
-    }
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prevFilters => {
+            const newFilters = { ...prevFilters, [name]: value };
 
-    if (error) {
-        return <div className="text-danger py-4">Error al cargar los libros: {error.message}</div>;
-    }
+            const minPrice = parseFloat(newFilters.precio_min);
+            const maxPrice = parseFloat(newFilters.precio_max);
+
+            if (!isNaN(minPrice) && !isNaN(maxPrice) && minPrice > maxPrice) {
+                setPriceRangeError('El precio mínimo no puede ser mayor que el precio máximo.');
+            } else {
+                setPriceRangeError('');
+            }
+            return newFilters;
+        });
+    };
+
+    const handleApplyFilters = (e) => {
+        e.preventDefault();
+
+        const minPrice = parseFloat(filters.precio_min);
+        const maxPrice = parseFloat(filters.precio_max);
+
+        if (!isNaN(minPrice) && !isNaN(maxPrice) && minPrice > maxPrice) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error de Filtro',
+                text: 'El precio mínimo no puede ser mayor que el precio máximo. Por favor, corrige los valores.',
+            });
+            return;
+        }
+
+        setPriceRangeError('');
+
+        fetchLibros(filters);
+    };
+
+    const handleClearFilters = () => {
+        const clearedFilters = {
+            nombre: '',
+            autor: '',
+            genero: '',
+            precio_min: '',
+            precio_max: ''
+        };
+        setFilters(clearedFilters);
+        setPriceRangeError(''); 
+        fetchLibros(clearedFilters);
+    };
 
     const handleAddToCart = (libroId, precio) => {
         const carritoApiUrl = `${VITE_API_BASE_URL}/api/carrito/add`;
@@ -86,14 +164,32 @@ function Home() {
             return response.json();
         })
         .then(data => {
-            Swal.fire({
-                icon: 'success',
-                title: '¡Reservado!',
-                text: data.message,
-                showConfirmButton: false,
-                timer: 1500
-            });
-            fetchLibros();
+            if (data.already_in_cart) {
+                Swal.fire({
+                    icon: 'info',
+                    title: '¡Ya está en el carrito!',
+                    text: 'Este libro ya se encuentra en tu carrito y está reservado.',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            } else if (data.message.includes('reservado por otra persona')) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Lo sentimos',
+                    text: data.message,
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            } else {
+                Swal.fire({
+                    icon: 'success',
+                    title: '¡Reservado!',
+                    text: data.message,
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+                fetchLibros(filters);
+            }
         })
         .catch(error => {
             Swal.fire({
@@ -105,60 +201,147 @@ function Home() {
     };
 
     return (
-        <div className="container-fluid py-5">
-            <div className="row">
-                {/* Eliminamos la columna del bot de aquí */}
-                {/* <div className="col-md-4 col-lg-3 d-none d-md-block border-end pe-md-4">
-                    <Bot />
-                </div> */}
+        <Container className="py-5">
+            <Row>
+                <Col md={3} className="mb-4 mb-md-0 border-end pe-md-4">
+                    <h3 className="mb-3">Filtros</h3>
+                    <Form onSubmit={handleApplyFilters}>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Título</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="nombre"
+                                value={filters.nombre}
+                                onChange={handleFilterChange}
+                                placeholder="Buscar por título"
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Autor</Form.Label>
+                            <Form.Control
+                                type="text"
+                                name="autor"
+                                value={filters.autor}
+                                onChange={handleFilterChange}
+                                placeholder="Buscar por autor"
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Género</Form.Label>
+                            <Form.Select
+                                name="genero"
+                                value={filters.genero}
+                                onChange={handleFilterChange}
+                            >
+                                <option value="">Todos los géneros</option>
+                                {generos.map(gen => (
+                                    <option key={gen} value={gen}>{gen}</option>
+                                ))}
+                            </Form.Select>
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Precio Mínimo</Form.Label>
+                            <Form.Control
+                                type="number"
+                                name="precio_min"
+                                value={filters.precio_min}
+                                onChange={handleFilterChange}
+                                min="0"
+                                isInvalid={!!priceRangeError} 
+                            />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                            <Form.Label>Precio Máximo</Form.Label>
+                            <Form.Control
+                                type="number"
+                                name="precio_max"
+                                value={filters.precio_max}
+                                onChange={handleFilterChange}
+                                min="0"
+                                isInvalid={!!priceRangeError} 
+                            />
+                            <Form.Control.Feedback type="invalid">
+                                {priceRangeError}
+                            </Form.Control.Feedback>
+                        </Form.Group>
+                        <div className="d-grid gap-2">
+                            <Button variant="primary" type="submit" disabled={!!priceRangeError}>
+                                Aplicar Filtros
+                            </Button>
+                            <Button variant="outline-secondary" onClick={handleClearFilters}>Limpiar Filtros</Button>
+                        </div>
+                    </Form>
+                </Col>
 
-                {/* La columna principal de libros ahora ocupa todo el ancho disponible */}
-                <div className="col-12"> {/* Cambiado a col-12 para ocupar todo el ancho */}
-                    <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-                        {libros.map(libro => (
-                            <div key={libro.id} className="col">
-                                <div className="card h-100 shadow-sm">
-                                    <div className="book-cover-container">
-                                        {libro.imagen_portada && (
-                                            <img
-                                                src={`${VITE_API_BASE_URL}/${libro.imagen_portada}`}
-                                                alt={`Portada de ${libro.titulo}`}
-                                                className="book-cover-image"
-                                            />
-                                        )}
-                                    </div>
-                                    <div className="card-body d-flex flex-column">
-                                        <hr className="my-2" />
-                                        <h4 className="card-title fw-bold text-black">{libro.titulo}</h4>
-                                        <p className="card-text text-secondary small">{libro.autor}</p>
-                                        <p className="card-text mt-auto">
-                                            <strong className="text-danger">{libro.precio}€</strong>
-                                        </p>
-                                        <div className="mt-3 d-grid gap-2">
-                                            {libro.esta_reservado && (
-                                                <p className="mt-1 text-warning small">Reservado</p>
-                                            )}
-                                            <Link to={`/libro/${libro.id}`} className="btn btn-outline-primary btn-sm">Ver detalles</Link>
-                                            <button
-                                                className="btn btn-success btn-sm"
-                                                onClick={() => handleAddToCart(libro.id, libro.precio)}
-                                                disabled={libro.esta_reservado}
-                                            >
-                                                {libro.esta_reservado ? 'Reservado' : 'Añadir'}
-                                            </button>
+                <Col md={9}>
+                    {loading ? (
+                        <div className="text-center py-4">
+                            <Spinner animation="border" role="status">
+                                <span className="visually-hidden">Cargando libros...</span>
+                            </Spinner>
+                        </div>
+                    ) : error ? (
+                        <div className="text-center py-4">
+                            <Alert variant="danger">Error al cargar los libros: {error.message}</Alert>
+                        </div>
+                    ) : (
+                        <Row xs={1} sm={2} md={2} lg={3} className="g-4 justify-content-center">
+                            {libros.length === 0 ? (
+                                <Col className="text-center">
+                                    <Alert variant="info" className="mt-4">
+                                        No hay libros disponibles con los filtros aplicados.
+                                    </Alert>
+                                </Col>
+                            ) : (
+                                libros.map(libro => (
+                                    <Col key={libro.id}>
+                                        <div className="card h-100 shadow-sm book-card">
+                                            <div className="book-cover-container">
+                                                {libro.imagen_portada && (
+                                                    <img
+                                                        src={`${VITE_API_BASE_URL}/${libro.imagen_portada}`}
+                                                        alt={`Portada de ${libro.titulo}`}
+                                                        className="book-cover-image"
+                                                    />
+                                                )}
+                                            </div>
+                                            <div className="card-body d-flex flex-column">
+                                                <hr className="my-2" />
+                                                <h4 className="card-title fw-bold">{libro.titulo}</h4>
+                                                <p className="card-text text-muted small">{libro.autor}</p>
+                                                
+                                                <div className="d-flex align-items-center justify-content-between mt-auto mb-3">
+                                                    <p className="h5 text-danger fw-bold mb-0">{parseFloat(libro.precio).toFixed(2)}€</p>
+                                                    {libro.esta_reservado ? (
+                                                        <span className="badge bg-warning text-dark">Reservado</span>
+                                                    ) : (
+                                                        <span className="badge bg-success">Disponible</span>
+                                                    )}
+                                                </div>
+
+                                                <div className="d-grid gap-2">
+                                                    <Link to={`/libro/${libro.id}`} className="btn btn-outline-primary btn-sm">Ver detalles</Link>
+                                                    <Button
+                                                        variant="primary"
+                                                        size="sm"
+                                                        onClick={() => handleAddToCart(libro.id, libro.precio)}
+                                                        disabled={libro.esta_reservado}
+                                                    >
+                                                        {libro.esta_reservado ? 'Reservado' : 'Añadir'}
+                                                    </Button>
+                                                </div>
+                                            </div>
                                         </div>
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                    {libros.length === 0 && <p className="mt-4 text-muted">No hay libros disponibles.</p>}
-                </div>
-            </div>
+                                    </Col>
+                                ))
+                            )}
+                        </Row>
+                    )}
+                </Col>
+            </Row>
 
-            {/* ¡Renderiza el nuevo componente flotante aquí! */}
             <FloatingBotButton />
-        </div>
+        </Container>
     );
 }
 

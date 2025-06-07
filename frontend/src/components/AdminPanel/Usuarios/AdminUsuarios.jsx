@@ -84,7 +84,7 @@ function AdminUsuarios() {
         navigate(`/usuarios/edit/${id}`);
     };
 
-    const handleBorrarUsuario = async (id) => {
+    const handleBorrarUsuario = async (id, correo) => {
         if (id === currentUserId) {
             Swal.fire({
                 icon: 'warning',
@@ -95,12 +95,13 @@ function AdminUsuarios() {
         }
 
         const result = await Swal.fire({
-            title: `¿Estás seguro de que quieres borrar el usuario con ID ${id}?`,
+            title: `¿Estás seguro de que quieres borrar el usuario "${correo}"?`,
             text: "¡Esta acción no se puede deshacer!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#3085d6',
             cancelButtonColor: '#d33',
+            cancelButtonText: 'Cancelar',
             confirmButtonText: 'Sí, borrarlo'
         });
 
@@ -203,7 +204,7 @@ function AdminUsuarios() {
                                 <td>
                                     <Button
                                         className="btn btn-danger btn-sm"
-                                        onClick={() => handleBorrarUsuario(usuario.id)}
+                                        onClick={() => handleBorrarUsuario(usuario.id, usuario.correo)}
                                         disabled={usuario.id === currentUserId}
                                     >
                                         Borrar

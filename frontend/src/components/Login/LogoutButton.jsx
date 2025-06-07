@@ -1,9 +1,8 @@
-import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import { useAuth } from '../../contexts/AuthContext';
 
-function LogoutButton({ className }) {
+function LogoutButton({ children, className }) {
     const navigate = useNavigate();
     const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const { logout } = useAuth();
@@ -32,7 +31,7 @@ function LogoutButton({ className }) {
                         logout();
                         Swal.fire(
                             '¡Sesión cerrada!',
-                            'Has cerrado tu sesión exitosamente.',
+                            'Has cerrado tu sesión con éxito.',
                             'success'
                         );
                         navigate('/');
@@ -62,8 +61,8 @@ function LogoutButton({ className }) {
     };
 
     return (
-        <button onClick={handleLogout} className={`text-blue-500 hover:underline ${className || ''}`}>
-            Cerrar Sesión
+        <button onClick={handleLogout} className={className}>
+            {children}
         </button>
     );
 }

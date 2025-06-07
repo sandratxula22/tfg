@@ -20,6 +20,7 @@ Route::post('/login', [AuthController::class, 'login'])->name('login');
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
 
 Route::get('/libros', [LibroController::class, 'showBooks']);
+Route::get('/libros/generos', [LibroController::class, 'getUniqueGeneros']);
 Route::get('/libros/{id}', [LibroController::class, 'showBookById']);
 
 Route::middleware('auth:sanctum')->group(function () {

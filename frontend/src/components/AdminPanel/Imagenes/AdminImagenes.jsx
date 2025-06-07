@@ -57,9 +57,9 @@ function AdminImagenes() {
         navigate(`/libros/images-edit/${id}`);
     };
 
-    const handleBorrarImagen = async (id) => {
+    const handleBorrarImagen = async (id, titulo) => {
         const result = await Swal.fire({
-            title: `¿Estás seguro de que quieres borrar la imagen con ID ${id}?`,
+            title: `¿Estás seguro de que quieres borrar la imagen del libro "${titulo}"?`,
             text: "¡Esta acción no se puede deshacer!",
             icon: 'warning',
             showCancelButton: true,
@@ -81,7 +81,7 @@ function AdminImagenes() {
                     setImagenes(imagenes.filter(imagen => imagen.id !== id));
                     Swal.fire(
                         '¡Borrada!',
-                        'La imagen ha sido borrada exitosamente.',
+                        'La imagen ha sido borrada con éxito.',
                         'success'
                     );
                 } else {
@@ -156,7 +156,7 @@ function AdminImagenes() {
                                     <Button className="btn btn-primary btn-sm me-2" onClick={() => handleEditarImagen(imagen.id)}>Editar</Button>
                                 </td>
                                 <td>
-                                    <Button className="btn btn-danger btn-sm" onClick={() => handleBorrarImagen(imagen.id)}>Borrar</Button>
+                                    <Button className="btn btn-danger btn-sm" onClick={() => handleBorrarImagen(imagen.id, imagen.titulo_libro)}>Borrar</Button>
                                 </td>
                             </tr>
                         ))

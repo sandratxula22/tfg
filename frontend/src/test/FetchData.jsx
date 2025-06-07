@@ -29,7 +29,6 @@ function FetchData() {
 
     return (
         <div>
-            {/* Muestra los datos */}
             <pre>{JSON.stringify(data, null, 2)}</pre>
         </div>
     );

@@ -1,11 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPaperPlane, faRobot, faUser, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faPaperPlane, faRobot, faUser, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const API_URL = import.meta.env.VITE_API_BASE_URL;
 
-function Bot() {
+function Bot({ onClose }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
@@ -57,9 +57,17 @@ function Bot() {
 
     return (
         <div className="flex flex-col h-[600px] w-full max-w-lg mx-auto border border-gray-300 rounded-lg shadow-lg bg-white">
-            <div className="p-4 border-b border-gray-200 bg-blue-600 text-white rounded-t-lg flex items-center">
-                <FontAwesomeIcon icon={faRobot} className="mr-2" />
-                <h2 className="text-lg font-semibold">Bot Recomendador de Libros</h2>
+            <div className="p-4 border-b border-gray-200 bg-blue-600 text-white rounded-t-lg flex items-center justify-between">
+                <div className="flex items-center">
+                    <FontAwesomeIcon icon={faRobot} className="mr-2" />
+                    <h2 className="text-base font-semibold">Asistente de Libros</h2>
+                </div>
+                <button
+                    onClick={onClose}
+                    className="text-white hover:text-gray-200 focus:outline-none text-xl p-1 rounded-full hover:bg-blue-700"
+                >
+                    <FontAwesomeIcon icon={faTimes} />
+                </button>
             </div>
 
             <div className="flex-1 p-4 overflow-y-auto space-y-4">

@@ -106,7 +106,7 @@ function CrearUsuario() {
                 </Form.Group>
 
                 <Button variant="primary" type="submit">Crear Usuario</Button>
-                <Button variant="secondary" onClick={() => navigate('/admin/usuarios')}>Volver</Button>
+                <Button variant="secondary" onClick={() => navigate('/admin/usuarios')} className="ms-3">Volver</Button>
             </Form>
         </div>
     );

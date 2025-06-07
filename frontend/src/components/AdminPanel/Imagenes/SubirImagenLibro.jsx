@@ -111,7 +111,7 @@ function SubirImagenLibro() {
                 </Form.Group>
 
                 <Button variant="primary" type="submit">Subir Imagen</Button>
-                <Button variant="secondary" onClick={() => navigate('/admin/imagenes')}>Volver</Button>
+                <Button variant="secondary" onClick={() => navigate('/admin/imagenes')} className="ms-3">Volver</Button>
             </Form>
         </div>
     );

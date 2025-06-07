@@ -1,4 +1,3 @@
-import React from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 import LogoutButton from '../Login/LogoutButton';
@@ -26,11 +25,20 @@ function HeaderComponent() {
                 </Navbar.Brand>
                 <Navbar.Toggle aria-controls="basic-navbar-nav" className="text-white" />
                 <Navbar.Collapse id="basic-navbar-nav" className="navbar-collapse-custom">
-                    <Nav className="navbar-nav-all">
+                    <Nav className="navbar-nav-left-group">
+                        <Nav.Link as={Link} to="/peticiones" className="nav-icon-link nav-peticiones-desktop-text">
+                            <span className="material-symbols-outlined nav-icon">mail</span>
+                            <span className="nav-text-mobile">Peticiones</span> 
+                        </Nav.Link>
+                    </Nav>
+
+                    <Nav className="navbar-nav-right-group">
                         {userRole === 'admin' && (
-                            <Nav.Link as={Link} to="/admin" className="nav-link-custom">Panel de Admin</Nav.Link>
+                            <Nav.Link as={Link} to="/admin" className="nav-icon-link">
+                                <span className="material-symbols-outlined nav-icon">admin_panel_settings</span>
+                                <span>Panel de Admin</span>
+                            </Nav.Link>
                         )}
-                        <Nav.Link as={Link} to="/peticiones" className="nav-link-custom">Peticiones</Nav.Link>
                         {isAuthenticated && (
                             <>
                                 <Nav.Link as={Link} to="/carrito" className="nav-icon-link">
@@ -49,10 +57,14 @@ function HeaderComponent() {
                         )}
                         {!loadingAuth ? (
                             isAuthenticated ? (
-                                <LogoutButton onLogout={handleLogoutSuccess} className="btn-logout-custom" />
+                                <LogoutButton className="nav-icon-link">
+                                    <span className="material-symbols-outlined nav-icon" data-icon="logout">logout</span>
+                                    <span className="nav-text-mobile">Cerrar Sesión</span>
+                                </LogoutButton>
                             ) : (
-                                <Nav.Link as={Link} to="/login" className="nav-link-custom btn-login-custom">
-                                    Iniciar Sesión
+                                <Nav.Link as={Link} to="/login" className="nav-icon-link">
+                                    <span className="material-symbols-outlined nav-icon" data-icon="login">login</span>
+                                    <span className="nav-text-mobile">Iniciar Sesión</span>
                                 </Nav.Link>
                             )
                         ) : (

@@ -136,7 +136,7 @@ function EditarLibro() {
                 </Form.Group>
 
                 <Button variant="primary" type="submit">Guardar Cambios</Button>
-                <Button variant="secondary" onClick={() => navigate('/admin/libros')}>Volver</Button>
+                <Button variant="secondary" onClick={() => navigate('/admin/libros')} className="ms-3">Volver</Button>
             </Form>
         </div>
     );

@@ -4,9 +4,11 @@ import Footer from './components/Footer/FooterComponent';
 
 function App() {
     return (
-        <div className="App">
+        <div className="d-flex flex-column min-vh-100 App">
             <Header></Header>
-            <Outlet></Outlet>
+            <div className="flex-grow-1">
+                <Outlet></Outlet>
+            </div>
             <Footer></Footer>
         </div>
     );

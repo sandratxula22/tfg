@@ -64,6 +64,11 @@ function Carrito() {
         const pedidoId = queryParams.get('pedido_id');
         const errorMessage = queryParams.get('message');
 
+        const cleanUrl = location.pathname;
+        if (paymentStatus || pedidoId || errorMessage) {
+            navigate(cleanUrl, { replace: true });
+        }
+
         if (paymentStatus === 'success') {
             Swal.fire({
                 icon: 'success',
@@ -82,7 +87,6 @@ function Carrito() {
                 showConfirmButton: false,
                 timer: 2000
             }).then(() => {
-                navigate('/carrito', { replace: true });
             });
         } else if (paymentStatus === 'error') {
             Swal.fire({
@@ -92,7 +96,6 @@ function Carrito() {
                 showConfirmButton: false,
                 timer: 3000
             }).then(() => {
-                navigate('/carrito', { replace: true });
             });
         }
     }, [fetchCarrito, location.search, navigate, authToken]);
@@ -121,6 +124,8 @@ function Carrito() {
                 text: 'El libro ha sido eliminado de tu carrito.',
                 showConfirmButton: false,
                 timer: 1500
+            }).then(() => {
+                fetchCarrito();
             });
         } catch (error) {
             Swal.fire({
@@ -166,15 +171,14 @@ function Carrito() {
                 throw new Error(errorData.message || 'Error al renovar la reserva');
             }
             const data = await response.json();
-            setCarritoItems(prevItems => prevItems.map(item =>
-                item.id === itemId ? { ...item, reservado_hasta: data.reservado_hasta } : item
-            ));
             Swal.fire({
                 icon: 'success',
                 title: '¡Reserva renovada!',
                 text: 'Tu reserva ha sido renovada por 15 minutos más.',
                 showConfirmButton: false,
                 timer: 1500
+            }).then(() => {
+                fetchCarrito();
             });
         } catch (error) {
             Swal.fire({
@@ -186,35 +190,39 @@ function Carrito() {
     };
 
     const getReservationStatus = (item) => {
-        if (item.status_message) {
-            const isExpiredForCurrentUser = item.reservation_expired_for_current_user;
-            const canBePurchased = item.can_be_purchased;
-            const isAvailableOverall = item.libro?.disponible;
-
-            if (!canBePurchased) {
-                return <span className="text-danger">{item.status_message}</span>;
-            } else if (isExpiredForCurrentUser) {
-                return (
-                    <div>
-                        <span className="text-danger">{item.status_message}</span>
-                        <button
-                            className="btn btn-sm btn-outline-secondary ms-2"
-                            onClick={() => handleRenewReservation(item.id)}
-                            disabled={!isAvailableOverall}
-                        >
-                            Renovar
-                        </button>
-                    </div>
-                );
-            } else if (item.reservado_hasta) {
-                const reservationEndTimeUTC = moment.utc(item.reservado_hasta);
-                const nowUTC = moment.utc();
-                const timeLeft = moment.duration(reservationEndTimeUTC.diff(nowUTC));
-                const minutes = Math.ceil(timeLeft.asMinutes());
+        if (!item.can_be_purchased) {
+            return <span className="text-danger">{item.status_message}</span>;
+        } 
+        else if (item.reservation_expired_for_current_user) {
+             return (
+                 <div>
+                     <span className="text-danger">{item.status_message}</span>
+                     <button
+                         className="btn btn-sm btn-outline-secondary ms-2"
+                         onClick={() => handleRenewReservation(item.id)}
+                         disabled={!item.libro?.disponible}
+                     >
+                         Renovar
+                     </button>
+                 </div>
+             );
+         } 
+         else if (item.reservado_hasta) {
+            const reservationEndTimeUTC = moment.utc(item.reservado_hasta);
+            const nowUTC = moment.utc();
+            const timeLeft = moment.duration(reservationEndTimeUTC.diff(nowUTC));
+            const minutes = Math.ceil(timeLeft.asMinutes());
+            if (minutes > 0) {
                 return `Reservado por ${minutes} minutos`;
+            } else {
+                return "Reserva activa (próxima a expirar)";
             }
         }
         return null;
+    };
+
+    const getTotalPrice = () => {
+        return carritoItems.reduce((total, item) => total + (item.can_be_purchased ? parseFloat(item.precio) : 0), 0).toFixed(2);
     };
 
     const handleCheckout = async () => {
@@ -244,7 +252,7 @@ function Carrito() {
 
     return (
         <div className="container py-5">
-            <h1 className="mb-4">Tu Carrito</h1>
+            <h1 className="mb-4">Mi Carrito</h1>
 
             <Alert variant="info" className="mb-4">
                 <Alert.Heading>¡Importante sobre las reservas!</Alert.Heading>
@@ -296,7 +304,7 @@ function Carrito() {
             </ul>
             {carritoItems.length > 0 && (
                 <div className="mt-4 text-end">
-                    <strong>Total: {carritoItems.reduce((total, item) => total + (item.can_be_purchased ? parseFloat(item.precio) : 0), 0).toFixed(2)}€</strong>
+                    <strong>Total: {getTotalPrice()}€</strong>
                 </div>
             )}
             {carritoItems.length > 0 && (
