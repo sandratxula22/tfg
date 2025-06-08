@@ -9,29 +9,23 @@ RUN apk add --no-cache \
     libwebp-dev \
     freetype-dev \
     imagemagick-dev \
-    build-base \
-    autoconf \
     supervisor \
     nodejs \
     npm \
+    php82-pecl-imagick \
     && docker-php-ext-install pdo pdo_mysql zip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j$(nproc) gd \
     && docker-php-ext-install bcmath \
-    && docker-php-ext-install exif \
-    && pecl install imagick \
-    && docker-php-ext-enable imagick \
-    && apk del build-base autoconf
+    && docker-php-ext-install exif
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 WORKDIR /var/www/html
 
-COPY backend/composer.json backend/composer.lock ./
+COPY backend/ .
 
 RUN composer install --no-dev --optimize-autoloader
-
-COPY backend/ .
 
 RUN chown -R www-data:www-data /var/www/html/storage \
     && chown -R www-data:www-data /var/www/html/bootstrap/cache \
