@@ -9,6 +9,8 @@ RUN apk add --no-cache \
     libwebp-dev \
     freetype-dev \
     imagemagick-dev \
+    build-base \
+    autoconf \
     supervisor \
     nodejs \
     npm \
@@ -18,7 +20,8 @@ RUN apk add --no-cache \
     && docker-php-ext-install bcmath \
     && docker-php-ext-install exif \
     && pecl install imagick \
-    && docker-php-ext-enable imagick
+    && docker-php-ext-enable imagick \
+    && apk del build-base autoconf
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
