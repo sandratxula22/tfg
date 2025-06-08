@@ -7,7 +7,7 @@ services:
     volumes:
       - ./backend:/var/www/html
     expose:
-      - 9000
+      - "9000:80"
     depends_on:
       - mysql
     environment:
