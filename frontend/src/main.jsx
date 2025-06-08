@@ -114,10 +114,6 @@ const router = createBrowserRouter([
       {
         path: '/peticiones',
         element: <Peticiones></Peticiones>
-      },
-      {
-        path: '*',
-        element: <Home></Home>
       }
     ]
   }
