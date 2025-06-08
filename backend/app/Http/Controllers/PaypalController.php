@@ -69,7 +69,6 @@ class PaypalController extends Controller
 
         DB::beginTransaction();
         try {
-            // 2. Guardar los datos de envío en el pedido pendiente
             $pendingOrder = Pedido::create([
                 'id_usuario' => $userId,
                 'total' => $total,
@@ -98,26 +97,18 @@ class PaypalController extends Controller
                                     'currency_code' => 'EUR',
                                     'value' => number_format($total, 2, '.', ''),
                                 ],
-                                // Puedes añadir shipping aquí si tienes un coste de envío fijo
-                                // 'shipping' => [
-                                //     'currency_code' => 'EUR',
-                                //     'value' => '0.00', // O el coste de envío calculado
-                                // ]
                             ],
                         ],
                         'items' => $items,
-                        // 3. Añadir la información de envío a la solicitud de PayPal
                         'shipping' => [
                             'name' => [
                                 'full_name' => $shippingAddressData['nombre'] . ' ' . $shippingAddressData['apellidos']
                             ],
                             'address' => [
                                 'address_line_1' => $shippingAddressData['direccion'],
-                                // Si tienes una segunda línea de dirección, puedes añadirla aquí
-                                // 'address_line_2' => '',
-                                'admin_area_2' => $shippingAddressData['ciudad'], // Ciudad
+                                'admin_area_2' => $shippingAddressData['ciudad'],
                                 'postal_code' => $shippingAddressData['codigo_postal'],
-                                'country_code' => $shippingAddressData['pais'], // Código de país ISO 3166-1 alpha-2
+                                'country_code' => $shippingAddressData['pais'],
                             ]
                         ]
                     ],
@@ -125,7 +116,6 @@ class PaypalController extends Controller
                 'application_context' => [
                     'return_url' => route('paypal.capture'),
                     'cancel_url' => route('paypal.cancel'),
-                    // 4. Configurar la preferencia de envío para que use la dirección proporcionada
                     'shipping_preference' => 'SET_PROVIDED_ADDRESS',
                 ],
             ];

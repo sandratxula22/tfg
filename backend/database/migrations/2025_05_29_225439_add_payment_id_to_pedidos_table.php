@@ -6,11 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 class AddPaymentIdToPedidosTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up()
     {
         Schema::table('pedidos', function (Blueprint $table) {
@@ -18,11 +13,6 @@ class AddPaymentIdToPedidosTable extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
         Schema::table('pedidos', function (Blueprint $table) {
