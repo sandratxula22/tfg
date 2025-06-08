@@ -18,7 +18,7 @@ import CrearLibro from './components/AdminPanel/Libros/CrearLibro.jsx';
 import SubirImagenLibro from './components/AdminPanel/Imagenes/SubirImagenLibro.jsx';
 import AdminImagenes from './components/AdminPanel/Imagenes/AdminImagenes.jsx';
 import EditarImagen from './components/AdminPanel/Imagenes/EditarImagen.jsx';
-import CrearUsuario from './components/AdminPanel/Usuarios/Crearusuario.jsx';
+import CrearUsuario from './components/AdminPanel/Usuarios/CrearUsuario.jsx';
 import EditarUsuario from './components/AdminPanel/Usuarios/EditarUsuario.jsx';
 import Carrito from './components/Carrito/Carrito.jsx';
 import Pedidos from './components/Pedidos/Pedidos.jsx';
