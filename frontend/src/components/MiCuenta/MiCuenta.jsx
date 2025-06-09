@@ -22,7 +22,6 @@ function MiCuenta() {
 
     const navigate = useNavigate();
     const { logout, checkAuthStatus } = useAuth();
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const authToken = localStorage.getItem('authToken');
 
     useEffect(() => {
@@ -39,7 +38,7 @@ function MiCuenta() {
         setLoading(true);
         setError(null);
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/usuario`, {
+            const response = await fetch(`/api/usuario`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
                     'Content-Type': 'application/json'
@@ -70,7 +69,7 @@ function MiCuenta() {
         } finally {
             setLoading(false);
         }
-    }, [VITE_API_BASE_URL, authToken, logout, navigate]);
+    }, [authToken, logout, navigate]);
 
     useEffect(() => {
         fetchUserData();
@@ -100,7 +99,7 @@ function MiCuenta() {
         }).then(async (result) => {
             if (result.isConfirmed) {
                 try {
-                    const response = await fetch(`${VITE_API_BASE_URL}/api/usuario`, {
+                    const response = await fetch(`/api/usuario`, {
                         method: 'PUT',
                         headers: {
                             'Authorization': `Bearer ${authToken}`,
@@ -146,7 +145,7 @@ function MiCuenta() {
                 }
 
                 try {
-                    const response = await fetch(`${VITE_API_BASE_URL}/api/usuario/password`, {
+                    const response = await fetch(`/api/usuario/password`, {
                         method: 'PUT',
                         headers: {
                             'Authorization': `Bearer ${authToken}`,

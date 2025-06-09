@@ -6,7 +6,6 @@ import axios from 'axios';
 
 function CrearUsuario() {
     const navigate = useNavigate();
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [usuario, setUsuario] = useState({
         nombre: '',
         apellido: '',
@@ -33,7 +32,7 @@ function CrearUsuario() {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await axios.post(`${VITE_API_BASE_URL}/api/admin/usuarios/create`, usuario, {
+            const response = await axios.post(`/api/admin/usuarios/create`, usuario, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },

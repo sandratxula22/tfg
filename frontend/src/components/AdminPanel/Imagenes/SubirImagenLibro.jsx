@@ -6,7 +6,6 @@ import axios from 'axios';
 
 function SubirImagenLibro() {
     const navigate = useNavigate();
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [libros, setLibros] = useState([]);
     const [libroId, setLibroId] = useState('');
     const [imagenFile, setImagenFile] = useState(null);
@@ -17,7 +16,7 @@ function SubirImagenLibro() {
         const fetchLibros = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await fetch(`${VITE_API_BASE_URL}/api/libros`, {
+                const response = await fetch(`/api/libros`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
@@ -64,7 +63,7 @@ function SubirImagenLibro() {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await axios.post(`${VITE_API_BASE_URL}/api/admin/libros/${libroId}/upload-image`, formData, {
+            const response = await axios.post(`/api/admin/libros/${libroId}/upload-image`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data',

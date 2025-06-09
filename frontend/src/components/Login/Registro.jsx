@@ -9,14 +9,13 @@ function Registro() {
     const [contrasena, setContrasena] = useState('');
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     const handleSubmit = async (event) => {
         event.preventDefault();
         setError('');
 
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/register`, {
+            const response = await fetch(`/api/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -6,7 +6,6 @@ import axios from 'axios';
 
 function CrearLibro() {
     const navigate = useNavigate();
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [libro, setLibro] = useState({
         titulo: '',
         autor: '',
@@ -52,7 +51,7 @@ function CrearLibro() {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await axios.post(`${VITE_API_BASE_URL}/api/admin/libros/create`, formData, {
+            const response = await axios.post(`/api/admin/libros/create`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data',

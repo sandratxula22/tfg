@@ -4,7 +4,6 @@ import { useAuth } from '../../contexts/AuthContext';
 
 function LogoutButton({ children, className }) {
     const navigate = useNavigate();
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const { logout } = useAuth();
 
     const handleLogout = async () => {
@@ -20,7 +19,7 @@ function LogoutButton({ children, className }) {
             if (result.isConfirmed) {
                 try {
                     const token = localStorage.getItem('authToken');
-                    const response = await fetch(`${VITE_API_BASE_URL}/api/logout`, {
+                    const response = await fetch(`/api/logout`, {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${token}`,

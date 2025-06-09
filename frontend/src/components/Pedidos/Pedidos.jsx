@@ -2,13 +2,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Swal from 'sweetalert2';
 import moment from 'moment';
-import { Alert, Card, Spinner, ListGroup } from 'react-bootstrap'; // Importa Card y ListGroup
+import { Alert, Card, Spinner, ListGroup } from 'react-bootstrap';
 
 function Pedidos() {
     const [pedidos, setPedidos] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -36,7 +35,7 @@ function Pedidos() {
         }
 
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/pedidos`, {
+            const response = await fetch(`/api/pedidos`, {
                 headers: {
                     'Authorization': `Bearer ${currentAuthToken}`,
                 },
@@ -53,7 +52,7 @@ function Pedidos() {
         } finally {
             setLoading(false);
         }
-    }, [VITE_API_BASE_URL]);
+    }, []);
 
     useEffect(() => {
         if (authToken) {

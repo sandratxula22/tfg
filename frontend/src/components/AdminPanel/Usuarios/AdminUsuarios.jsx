@@ -11,7 +11,6 @@ function AdminUsuarios() {
     const [usuarios, setUsuarios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const navigate = useNavigate();
     const [mensaje, setMensaje] = useState('');
 
@@ -23,7 +22,7 @@ function AdminUsuarios() {
         if (!token) return;
 
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/user`, {
+            const response = await fetch(`/api/user`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Accept': 'application/json',
@@ -38,14 +37,14 @@ function AdminUsuarios() {
         } catch (err) {
             console.error("Error de conexión al obtener el ID del usuario actual:", err);
         }
-    }, [VITE_API_BASE_URL]);
+    }, []);
 
     const fetchUsuarios = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`${VITE_API_BASE_URL}/api/admin/usuarios`, {
+            const response = await fetch(`/api/admin/usuarios`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -67,7 +66,7 @@ function AdminUsuarios() {
         } finally {
             setLoading(false);
         }
-    }, [VITE_API_BASE_URL]);
+    }, []);
 
     useEffect(() => {
         fetchCurrentUserId();
@@ -78,7 +77,7 @@ function AdminUsuarios() {
             setMensaje(editSuccessMessage);
             localStorage.removeItem('usuarioEditSuccess');
         }
-    }, [VITE_API_BASE_URL, fetchCurrentUserId, fetchUsuarios]);
+    }, [fetchCurrentUserId, fetchUsuarios]);
 
     const handleEditarUsuario = (id) => {
         navigate(`/usuarios/edit/${id}`);
@@ -108,7 +107,7 @@ function AdminUsuarios() {
         if (result.isConfirmed) {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.delete(`${VITE_API_BASE_URL}/api/admin/usuarios/delete/${id}`, {
+                const response = await axios.delete(`/api/admin/usuarios/delete/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },

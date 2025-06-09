@@ -10,7 +10,6 @@ function AdminImagenes() {
     const [imagenes, setImagenes] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const navigate = useNavigate();
     const [mensaje, setMensaje] = useState('');
 
@@ -19,7 +18,7 @@ function AdminImagenes() {
         setError(null);
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`${VITE_API_BASE_URL}/api/admin/images`, {
+            const response = await fetch(`/api/admin/images`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -41,7 +40,7 @@ function AdminImagenes() {
         } finally {
             setLoading(false);
         }
-    }, [VITE_API_BASE_URL]);
+    }, []);
 
     useEffect(() => {
         fetchImagenes();
@@ -51,7 +50,7 @@ function AdminImagenes() {
             setMensaje(editSuccessMessage);
             localStorage.removeItem('imagenEditSuccess');
         }
-    }, [VITE_API_BASE_URL, fetchImagenes]);
+    }, [fetchImagenes]);
 
     const handleEditarImagen = (id) => {
         navigate(`/libros/images-edit/${id}`);
@@ -71,7 +70,7 @@ function AdminImagenes() {
         if (result.isConfirmed) {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.delete(`${VITE_API_BASE_URL}/api/admin/images/delete/${id}`, {
+                const response = await axios.delete(`/api/admin/images/delete/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },

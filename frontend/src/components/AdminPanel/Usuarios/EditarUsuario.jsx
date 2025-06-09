@@ -9,7 +9,6 @@ import { useAuth } from '../../../contexts/AuthContext';
 function EditarUsuario() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [usuario, setUsuario] = useState({
         nombre: '',
         apellido: '',
@@ -30,7 +29,7 @@ function EditarUsuario() {
             if (!token) return;
 
             try {
-                const response = await fetch(`${VITE_API_BASE_URL}/api/user`, {
+                const response = await fetch(`/api/user`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Accept': 'application/json',
@@ -47,7 +46,7 @@ function EditarUsuario() {
             }
         };
         fetchLoggedInUserId();
-    }, [VITE_API_BASE_URL]);
+    }, []);
 
 
     useEffect(() => {
@@ -55,7 +54,7 @@ function EditarUsuario() {
             setLoading(true);
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await fetch(`${VITE_API_BASE_URL}/api/admin/usuarios/${id}`, {
+                const response = await fetch(`/api/admin/usuarios/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
@@ -81,7 +80,7 @@ function EditarUsuario() {
         };
 
         fetchUsuario();
-    }, [VITE_API_BASE_URL, id]);
+    }, [id]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -107,7 +106,7 @@ function EditarUsuario() {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await axios.put(`${VITE_API_BASE_URL}/api/admin/usuarios/edit/${id}`, usuario, {
+            const response = await axios.put(`/api/admin/usuarios/edit/${id}`, usuario, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },

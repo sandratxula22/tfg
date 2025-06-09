@@ -3,8 +3,6 @@ import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane, faRobot, faUser, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 
-const API_URL = import.meta.env.VITE_API_BASE_URL;
-
 function Bot({ onClose }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');

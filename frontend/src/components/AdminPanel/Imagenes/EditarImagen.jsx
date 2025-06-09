@@ -7,7 +7,6 @@ import axios from 'axios';
 function EditarImagen() {
     const navigate = useNavigate();
     const { id } = useParams();
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const [libros, setLibros] = useState([]);
     const [imagenData, setImagenData] = useState({
         libro_id: '',
@@ -21,7 +20,7 @@ function EditarImagen() {
         const fetchLibros = async () => {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await fetch(`${VITE_API_BASE_URL}/api/libros`, {
+                const response = await fetch(`/api/libros`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
@@ -41,7 +40,7 @@ function EditarImagen() {
             setLoading(true);
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await fetch(`${VITE_API_BASE_URL}/api/admin/images/${id}`, {
+                const response = await fetch(`/api/admin/images/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },
@@ -61,7 +60,7 @@ function EditarImagen() {
 
         fetchLibros();
         fetchImagen();
-    }, [VITE_API_BASE_URL, id]);
+    }, [id]);
 
     const handleLibroChange = (e) => {
         setImagenData({ ...imagenData, libro_id: e.target.value });
@@ -90,7 +89,7 @@ function EditarImagen() {
 
         try {
             const token = localStorage.getItem('authToken');
-            const response = await axios.post(`${VITE_API_BASE_URL}/api/admin/images/edit/${id}`, formData, {
+            const response = await axios.post(`/api/admin/images/edit/${id}`, formData, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data',

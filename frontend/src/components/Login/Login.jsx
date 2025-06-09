@@ -9,7 +9,6 @@ function Login() {
     const [error, setError] = useState('');
     const navigate = useNavigate();
     const location = useLocation();
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     const { checkAuthStatus } = useAuth();
 
@@ -17,7 +16,7 @@ function Login() {
         event.preventDefault();
         setError('');
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/login`, {
+            const response = await fetch(`/api/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

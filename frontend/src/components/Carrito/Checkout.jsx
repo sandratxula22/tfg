@@ -15,7 +15,6 @@ function Checkout() {
         codigo_postal: '',
         pais: '',
     });
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const navigate = useNavigate();
     const authToken = localStorage.getItem('authToken');
 
@@ -42,7 +41,7 @@ function Checkout() {
         }
 
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/carrito`, {
+            const response = await fetch(`/api/carrito`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
                 },
@@ -92,7 +91,7 @@ function Checkout() {
         } finally {
             setLoading(false);
         }
-    }, [VITE_API_BASE_URL, authToken, navigate]);
+    }, [authToken, navigate]);
 
     useEffect(() => {
         if (authToken) {
@@ -143,7 +142,7 @@ function Checkout() {
         }
 
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/paypal/checkout/start`, {
+            const response = await fetch(`/api/paypal/checkout/start`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${currentAuthToken}`,

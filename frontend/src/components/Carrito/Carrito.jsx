@@ -8,7 +8,6 @@ function Carrito() {
     const [carritoItems, setCarritoItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     const location = useLocation();
     const navigate = useNavigate();
@@ -36,7 +35,7 @@ function Carrito() {
         }
 
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/carrito`, {
+            const response = await fetch(`/api/carrito`, {
                 headers: {
                     'Authorization': `Bearer ${currentAuthToken}`,
                 },
@@ -52,7 +51,7 @@ function Carrito() {
         } finally {
             setLoading(false);
         }
-    }, [VITE_API_BASE_URL]);
+    }, []);
 
     useEffect(() => {
         if (authToken) {
@@ -107,7 +106,7 @@ function Carrito() {
             return;
         }
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/carrito/remove/${itemId}`, {
+            const response = await fetch(`/api/carrito/remove/${itemId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${currentAuthToken}`,
@@ -143,7 +142,7 @@ function Carrito() {
             return;
         }
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/carrito/renew/${itemId}`, {
+            const response = await fetch(`/api/carrito/renew/${itemId}`, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${currentAuthToken}`,

@@ -9,14 +9,13 @@ function LibroDetallesComponent() {
     const [libro, setLibro] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const navigate = useNavigate();
 
     const fetchLibro = async () => {
         setLoading(true);
         setError(null);
         try {
-            const apiUrl = `${VITE_API_BASE_URL}/api/libros/${id}`;
+            const apiUrl = `/api/libros/${id}`;
             const response = await fetch(apiUrl);
             if (!response.ok) {
                 if (response.status === 404) {
@@ -35,10 +34,10 @@ function LibroDetallesComponent() {
 
     useEffect(() => {
         fetchLibro();
-    }, [id, VITE_API_BASE_URL]);
+    }, [id]);
 
     const handleAddToCart = (libroId, precio) => {
-        const carritoApiUrl = `${VITE_API_BASE_URL}/api/carrito/add`;
+        const carritoApiUrl = `/api/carrito/add`;
         const authToken = localStorage.getItem('authToken');
 
         if (!authToken) {
@@ -158,7 +157,7 @@ function LibroDetallesComponent() {
                                 <Carousel.Item key={index}>
                                     <img
                                         className="d-block w-100 book-detail-image"
-                                        src={`${VITE_API_BASE_URL}/${image}`}
+                                        src={`/${image}`}
                                         alt={`Imagen ${index + 1} de ${libro.titulo}`}
                                     />
                                 </Carousel.Item>
@@ -167,7 +166,7 @@ function LibroDetallesComponent() {
                     ) : (
                         <img
                             className="d-block w-100 book-detail-image"
-                            src={`${VITE_API_BASE_URL}/${allImages[0]}`}
+                            src={`/${allImages[0]}`}
                             alt={`Portada de ${libro.titulo}`}
                         />
                     )}

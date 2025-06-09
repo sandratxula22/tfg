@@ -19,7 +19,6 @@ function Home() {
     const [generos, setGeneros] = useState([]);
     const [priceRangeError, setPriceRangeError] = useState('');
 
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const navigate = useNavigate();
 
     const fetchAllGeneros = useCallback(async () => {

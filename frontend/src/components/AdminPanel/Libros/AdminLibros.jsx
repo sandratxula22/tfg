@@ -10,7 +10,6 @@ function AdminLibros() {
     const [libros, setLibros] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const navigate = useNavigate();
     const [mensaje, setMensaje] = useState('');
 
@@ -19,7 +18,7 @@ function AdminLibros() {
         setError(null);
         try {
             const token = localStorage.getItem('authToken');
-            const response = await fetch(`${VITE_API_BASE_URL}/api/libros`, {
+            const response = await fetch(`/api/libros`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
                 },
@@ -41,7 +40,7 @@ function AdminLibros() {
         } finally {
             setLoading(false);
         }
-    }, [VITE_API_BASE_URL]);
+    }, []);
 
     useEffect(() => {
         fetchLibros();
@@ -71,7 +70,7 @@ function AdminLibros() {
         if (result.isConfirmed) {
             try {
                 const token = localStorage.getItem('authToken');
-                const response = await axios.delete(`${VITE_API_BASE_URL}/api/admin/libros/delete/${id}`, {
+                const response = await axios.delete(`/api/admin/libros/delete/${id}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                     },

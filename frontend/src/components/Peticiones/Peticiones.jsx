@@ -14,7 +14,6 @@ function Peticiones() {
     });
     const [sending, setSending] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const { isAuthenticated, user } = useAuth();
 
     useEffect(() => {
@@ -38,7 +37,7 @@ function Peticiones() {
         setSuccessMessage('');
 
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/peticiones/enviar`, {
+            const response = await fetch(`/api/peticiones/enviar`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

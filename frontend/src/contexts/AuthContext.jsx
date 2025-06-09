@@ -7,7 +7,6 @@ export const AuthProvider = ({ children }) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [userRole, setUserRole] = useState(null);
     const [loadingAuth, setLoadingAuth] = useState(true);
-    const VITE_API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     const checkAuthStatus = useCallback(async () => {
         setLoadingAuth(true);
@@ -21,7 +20,7 @@ export const AuthProvider = ({ children }) => {
         }
 
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/user`, {
+            const response = await fetch(`/api/user`, {
                 headers: {
                     'Authorization': `Bearer ${authToken}`,
                     'Accept': 'application/json',
@@ -54,7 +53,7 @@ export const AuthProvider = ({ children }) => {
         } finally {
             setLoadingAuth(false);
         }
-    }, [VITE_API_BASE_URL]);
+    }, []);
 
     useEffect(() => {
         checkAuthStatus();
