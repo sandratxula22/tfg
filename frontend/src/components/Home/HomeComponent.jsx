@@ -24,7 +24,7 @@ function Home() {
 
     const fetchAllGeneros = useCallback(async () => {
         try {
-            const response = await fetch(`${VITE_API_BASE_URL}/api/libros/generos`);
+            const response = await fetch(`/api/libros/generos`);
             if (!response.ok) {
                 throw new Error('Error al cargar la lista completa de géneros.');
             }
@@ -33,7 +33,7 @@ function Home() {
         } catch (err) {
             console.error("Error fetching all genres:", err);
         }
-    }, [VITE_API_BASE_URL]);
+    });
 
 
     const fetchLibros = useCallback((currentFilters) => {
@@ -47,7 +47,7 @@ function Home() {
         if (currentFilters.precio_min) queryParams.append('precio_min', currentFilters.precio_min);
         if (currentFilters.precio_max) queryParams.append('precio_max', currentFilters.precio_max);
 
-        const apiUrlWithFilters = `${VITE_API_BASE_URL}/api/libros?${queryParams.toString()}`;
+        const apiUrlWithFilters = `/api/libros?${queryParams.toString()}`;
 
         fetch(apiUrlWithFilters)
             .then(response => {
@@ -65,7 +65,7 @@ function Home() {
                 setError(error);
                 setLoading(false);
             });
-    }, [VITE_API_BASE_URL]);
+    });
 
     useEffect(() => {
         fetchAllGeneros();
@@ -123,7 +123,7 @@ function Home() {
     };
 
     const handleAddToCart = (libroId, precio) => {
-        const carritoApiUrl = `${VITE_API_BASE_URL}/api/carrito/add`;
+        const carritoApiUrl = `/api/carrito/add`;
         const authToken = localStorage.getItem('authToken'); 
 
         if (!authToken) {
@@ -299,7 +299,7 @@ function Home() {
                                             <div className="book-cover-container">
                                                 {libro.imagen_portada && (
                                                     <img
-                                                        src={`${VITE_API_BASE_URL}/${libro.imagen_portada}`}
+                                                        src={`/${libro.imagen_portada}`}
                                                         alt={`Portada de ${libro.titulo}`}
                                                         className="book-cover-image"
                                                     />
