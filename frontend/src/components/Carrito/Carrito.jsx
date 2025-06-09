@@ -276,7 +276,7 @@ function Carrito() {
                     </div>
                 ) : carritoItems.length === 0 ? (
                     <div className="alert alert-info" role="alert">
-                        Tu carrito está vacío. <Link to="/libros">Explora nuestros libros únicos</Link>.
+                        Tu carrito está vacío. <Link to="/">Explora nuestros libros únicos</Link>.
                     </div>
                 ) : (
                     carritoItems.map(item => (
