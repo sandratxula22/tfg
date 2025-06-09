@@ -19,7 +19,7 @@ function HeaderComponent() {
                 <Navbar.Brand as={Link} to="/" className="flex items-center">
                     <img
                         alt="La Página Doblada Logo"
-                        src={`${import.meta.env.VITE_API_BASE_URL}/img/logo_horizontal.png`}
+                        src={`/img/logo_horizontal.png`}
                         className="d-inline-block align-top navbar-logo-horizontal"
                     />
                 </Navbar.Brand>
