@@ -33,7 +33,7 @@ function Home() {
         } catch (err) {
             console.error("Error fetching all genres:", err);
         }
-    });
+    }, []);
 
 
     const fetchLibros = useCallback((currentFilters) => {
@@ -65,7 +65,7 @@ function Home() {
                 setError(error);
                 setLoading(false);
             });
-    });
+    }, []);
 
     useEffect(() => {
         fetchAllGeneros();
@@ -122,7 +122,7 @@ function Home() {
         fetchLibros(clearedFilters);
     };
 
-    const handleAddToCart = (libroId, precio) => {
+    const handleAddToCart = useCallback((libroId, precio) => {
         const carritoApiUrl = `/api/carrito/add`;
         const authToken = localStorage.getItem('authToken'); 
 
@@ -198,7 +198,7 @@ function Home() {
                 text: `Error al añadir al carrito: ${error.message}`,
             });
         });
-    };
+    },[]);
 
     return (
         <Container className="py-5">
