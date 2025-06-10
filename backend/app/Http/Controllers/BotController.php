@@ -30,7 +30,7 @@ class BotController extends Controller
                 'Authorization' => 'Bearer ' . $apiKey,
                 'Content-Type' => 'application/json',
             ])
-            ->timeout(60)
+            ->timeout(120)
             ->post($hfApiUrl, [
                 'messages' => [
                     ['role' => 'system', 'content' => 'Eres un asistente experto en literatura que recomienda libros. Responde siempre en español.'],
