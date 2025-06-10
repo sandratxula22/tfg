@@ -3,6 +3,8 @@ import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane, faRobot, faUser, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
 
+const API_URL = import.meta.env.VITE_API_BASE_URL;
+
 function Bot({ onClose }) {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
@@ -29,7 +31,7 @@ function Bot({ onClose }) {
             const token = localStorage.getItem('authToken');
             const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-            const response = await axios.post(`/api/bot-recomienda`, { query: userMessage.text }, { headers });
+            const response = await axios.post(`${API_URL}/api/bot-recomienda`, { query: userMessage.text }, { headers });
 
             const botResponse = {
                 sender: 'bot',
