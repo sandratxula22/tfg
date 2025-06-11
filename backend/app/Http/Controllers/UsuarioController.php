@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 class UsuarioController extends Controller
 {
@@ -118,20 +119,37 @@ class UsuarioController extends Controller
 
     public function deleteUser(int $id): JsonResponse
     {
+        DB::beginTransaction();
         try {
             $loggedInUser = Auth::user();
             if ($loggedInUser && $loggedInUser->id === $id) {
+                DB::rollBack();
                 return response()->json(['message' => 'No puedes eliminar tu propio usuario.'], 403);
             }
 
             $usuario = Usuario::findOrFail($id);
+
+            if ($usuario->pedidos()->exists()) {
+                DB::rollBack();
+                return response()->json(['message' => 'Este usuario no puede ser eliminado porque tiene historial de pedidos asociados.'], 409);
+            }
+
+            foreach ($usuario->carritos as $carrito) {
+                $carrito->detalles()->delete();
+                $carrito->delete();
+            }
+
             $usuario->delete();
+
+            DB::commit();
             return response()->json(['message' => 'Usuario borrado exitosamente'], 200);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            DB::rollBack();
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error("Error al borrar el usuario con ID {$id}: " . $e->getMessage());
-            return response()->json(['message' => 'Error al borrar el usuario'], 500);
+            return response()->json(['message' => 'Error al borrar el usuario: ' . $e->getMessage()], 500);
         }
     }
 

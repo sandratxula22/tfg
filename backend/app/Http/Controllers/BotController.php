@@ -23,7 +23,7 @@ class BotController extends Controller
 
         $prompt = "Actúa como un experto en recomendaciones de libros. Un usuario ha pedido la siguiente recomendación: '{$userQuery}'. Por favor, recomiéndale libros que coincidan con su petición, incluyendo título, autor y una breve descripción. Presenta cada recomendación en una línea nueva. La respuesta debe estar escrita completamente en español. Si no encuentras una recomendación clara, dilo amablemente.";
 
-        $hfApiUrl = 'https://router.huggingface.co/hf-inference/models/meta-llama/Llama-3.3-70B-Instruct/v1/chat/completions';
+        $hfApiUrl = 'https://router.huggingface.co/hf-inference/models/meta-llama/Llama-3.1-8B-Instruct/v1/chat/completions';
 
         try {
             $response = Http::withHeaders([
@@ -36,7 +36,7 @@ class BotController extends Controller
                     ['role' => 'system', 'content' => 'Eres un asistente experto en literatura que recomienda libros. Responde siempre en español.'],
                     ['role' => 'user', 'content' => $prompt],
                 ],
-                'model' => 'meta-llama/Llama-3.3-70B-Instruct',
+                'model' => 'meta-llama/Llama-3.1-8B-Instruct',
                 'max_tokens' => 500,
                 'temperature' => 0.5,
                 'stream' => false,
